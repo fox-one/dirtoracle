@@ -7,5 +7,5 @@ import (
 type Member struct {
 	ClientID  string
 	Name      string
-	VerifyKey blst.P1Affine
+	VerifyKey *blst.P1Affine
 }

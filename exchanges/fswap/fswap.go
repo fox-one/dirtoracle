@@ -98,31 +98,26 @@ func (f *fswapEx) syncPairs(ctx context.Context) {
 			return
 
 		case <-time.After(sleepDur):
+			f.updatePairs(ctx)
 			sleepDur = time.Second
-
-			resp, err := f.listPairs(ctx)
-			if err != nil {
-				log.WithError(err).Errorln("list pairs")
-				continue
-			}
-			f.pairs = resp
 		}
 	}
 }
 
-func (f *fswapEx) listPairs(ctx context.Context) (*PairResp, error) {
+func (f *fswapEx) updatePairs(ctx context.Context) error {
 	const uri = "/api/pairs"
 	resp, err := fswapsdk.Request(ctx).Get(uri)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	var body PairResp
 	if err := fswapsdk.UnmarshalResponse(resp, &body); err != nil {
-		return nil, err
+		return err
 	}
 
-	return &body, nil
+	f.pairs = &body
+	return nil
 }
 
 func (f *fswapEx) readTicker(ctx context.Context, asset *core.Asset) (*core.Ticker, error) {

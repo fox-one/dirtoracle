@@ -94,26 +94,20 @@ func (e *eswapEx) syncPairs(ctx context.Context) {
 			return
 
 		case <-time.After(sleepDur):
+			e.updatePairs(ctx)
 			sleepDur = time.Second
-
-			resp, err := e.listPairs(ctx)
-			if err != nil {
-				log.WithError(err).Errorln("list pairs")
-				continue
-			}
-			e.pairs = resp
 		}
 	}
 }
 
-func (e *eswapEx) listPairs(ctx context.Context) (*PairResp, error) {
+func (e *eswapEx) updatePairs(ctx context.Context) error {
 	const uri = "/pairs"
 
 	log := logger.FromContext(ctx)
 	resp, err := Request(ctx).Get(uri)
 	if err != nil {
 		log.WithError(err).Errorln("fetch pairs failed")
-		return nil, err
+		return err
 	}
 
 	var body struct {
@@ -132,7 +126,7 @@ func (e *eswapEx) listPairs(ctx context.Context) (*PairResp, error) {
 
 	if err := UnmarshalResponse(resp, &body); err != nil {
 		log.WithError(err).Errorln("fetch pairs failed")
-		return nil, err
+		return err
 	}
 
 	var pairs = PairResp{
@@ -151,22 +145,23 @@ func (e *eswapEx) listPairs(ctx context.Context) (*PairResp, error) {
 			FeePercent:   fee,
 		}
 	}
-	return &pairs, nil
+	e.pairs = &pairs
+	return nil
 }
 
-func (f *eswapEx) readTicker(ctx context.Context, asset *core.Asset) (*core.Ticker, error) {
-	if f.pairs == nil {
+func (e *eswapEx) readTicker(ctx context.Context, asset *core.Asset) (*core.Ticker, error) {
+	if e.pairs == nil {
 		return nil, errors.New("pairs not avaialbe")
 	}
 
 	var (
 		funds = decimal.New(1, 3)
 	)
-	bidOrder, err := fswapsdk.Route(f.pairs.Pairs, pusdAsset, asset.ID, funds)
+	bidOrder, err := fswapsdk.Route(e.pairs.Pairs, pusdAsset, asset.ID, funds)
 	if err != nil {
 		return nil, err
 	}
-	askOrder, err := fswapsdk.ReverseRoute(f.pairs.Pairs, asset.ID, pusdAsset, funds)
+	askOrder, err := fswapsdk.ReverseRoute(e.pairs.Pairs, asset.ID, pusdAsset, funds)
 	if err != nil {
 		return nil, err
 	}
@@ -178,7 +173,7 @@ func (f *eswapEx) readTicker(ctx context.Context, asset *core.Asset) (*core.Tick
 		Exchange: exchangeName,
 		AssetID:  asset.ID,
 
-		UpdatedAt: time.Unix(0, f.pairs.Timestamp*1000000),
+		UpdatedAt: time.Unix(0, e.pairs.Timestamp*1000000),
 		AskPrice:  decimal.Max(x, y),
 		BidPrice:  decimal.Min(x, y),
 		LastPrice: decimal.Avg(x, y),

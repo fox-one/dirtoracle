@@ -3,7 +3,7 @@ module github.com/fox-one/dirtoracle
 go 1.15
 
 require (
-	github.com/asaskevich/govalidator v0.0.0-20200907205600-7a23bdc65eef
+	github.com/RussellLuo/timingwheel v0.0.0-20191211035242-0e67dbf0ae97
 	github.com/bmizerany/assert v0.0.0-20160611221934-b7ed37b82869
 	github.com/fox-one/4swap-sdk-go v1.1.3
 	github.com/fox-one/mixin-sdk-go v1.2.9
@@ -12,7 +12,6 @@ require (
 	github.com/go-resty/resty/v2 v2.3.0
 	github.com/go-yaml/yaml v2.1.0+incompatible
 	github.com/gofrs/uuid v4.0.0+incompatible
-	github.com/jinzhu/gorm v1.9.16
 	github.com/jmoiron/sqlx v1.2.0
 	github.com/kr/pretty v0.2.1 // indirect
 	github.com/lib/pq v1.9.0

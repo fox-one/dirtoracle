@@ -10,7 +10,7 @@ type System struct {
 	ClientID  string
 	Members   []*Member
 	Threshold uint8
-	SignKey   blst.SecretKey
+	SignKey   *blst.SecretKey
 	Version   string
 }
 
