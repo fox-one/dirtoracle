@@ -3,12 +3,14 @@ package exinswap
 import (
 	"context"
 	"errors"
+	"fmt"
 	"sync"
 	"time"
 
 	fswapsdk "github.com/fox-one/4swap-sdk-go"
 	"github.com/fox-one/dirtoracle/core"
 	"github.com/fox-one/dirtoracle/core/exchange"
+	"github.com/fox-one/dirtoracle/pkg/number"
 	"github.com/fox-one/pkg/logger"
 	"github.com/shopspring/decimal"
 	"github.com/sirupsen/logrus"
@@ -41,39 +43,40 @@ func (*eswapEx) Name() string {
 
 func (e *eswapEx) Subscribe(ctx context.Context, asset *core.Asset, handler exchange.MarketHandler) error {
 	log := logger.FromContext(ctx).WithFields(logrus.Fields{
-		"ex":     "exinswap",
-		"worker": "subscribe",
+		"ex":    exchangeName,
+		"asset": asset.Symbol,
 	})
 	ctx = logger.WithContext(ctx, log)
-
-	e.once.Do(func() {
-		e.syncPairs(ctx)
-	})
-
-	log = log.WithField("asset", asset.Symbol)
 	log.Info("start")
 	defer log.Info("quit")
 
-	var (
-		sleepDur = time.Millisecond
-	)
+	e.once.Do(func() {
+		go e.syncPairs(ctx)
+	})
+
+	var lastTimestamp int64
 
 	for {
 		select {
 		case <-ctx.Done():
 			return ctx.Err()
 
-		case <-time.After(sleepDur):
-			sleepDur = time.Second
+		case <-time.After(time.Second):
+			if e.pairs.Timestamp <= lastTimestamp {
+				continue
+			}
+
 			ticker, err := e.readTicker(ctx, asset)
 			if err != nil {
 				log.WithError(err).Errorln("readTicker failed")
 				continue
 			}
 			if err := handler.OnTicker(ctx, asset, ticker); err != nil {
-				log.WithError(err).Errorln("onTicker failed")
+				log.WithError(err).Errorln("OnTicker failed")
 				continue
 			}
+
+			lastTimestamp = e.pairs.Timestamp
 		}
 	}
 }
@@ -113,14 +116,18 @@ func (e *eswapEx) updatePairs(ctx context.Context) error {
 	var body struct {
 		Pairs []struct {
 			Asset0 struct {
-				ID string `json:"uuid"`
+				ID    string          `json:"uuid"`
+				Price decimal.Decimal `json:"priceUsdt"`
 			} `json:"asset0"`
 			Asset1 struct {
-				ID string `json:"uuid"`
+				ID    string          `json:"uuid"`
+				Price decimal.Decimal `json:"priceUsdt"`
 			} `json:"asset1"`
-			Balance0 decimal.Decimal `json:"asset0Balance"`
-			Balance1 decimal.Decimal `json:"asset1Balance"`
-		} `json:"body"`
+			Balance0  decimal.Decimal `json:"asset0Balance"`
+			Balance1  decimal.Decimal `json:"asset1Balance"`
+			Volume    decimal.Decimal `json:"usdtTradeVolume24hours"`
+			TradeType string          `json:"tradeType"`
+		} `json:"data"`
 		Timestamp int64 `json:"timestampMs"`
 	}
 
@@ -135,15 +142,25 @@ func (e *eswapEx) updatePairs(ctx context.Context) error {
 	}
 
 	fee := decimal.New(3, -3)
+	curveFee := decimal.New(4, -4)
 	for i, p := range body.Pairs {
-		pairs.Pairs[i] = &fswapsdk.Pair{
-			RouteID:      int64(i),
-			BaseAssetID:  p.Asset0.ID,
-			BaseAmount:   p.Balance0,
-			QuoteAssetID: p.Asset1.ID,
-			QuoteAmount:  p.Balance1,
-			FeePercent:   fee,
+		pair := &fswapsdk.Pair{
+			RouteID:        int64(i),
+			BaseAssetID:    p.Asset0.ID,
+			BaseAmount:     p.Balance0,
+			QuoteAssetID:   p.Asset1.ID,
+			QuoteAmount:    p.Balance1,
+			FeePercent:     fee,
+			Volume24h:      p.Volume,
+			BaseVolume24h:  p.Volume.Div(p.Asset0.Price),
+			QuoteVolume24h: p.Volume.Div(p.Asset1.Price),
 		}
+
+		if p.TradeType == "curve" {
+			pair.FeePercent = curveFee
+		}
+
+		pairs.Pairs[i] = pair
 	}
 	e.pairs = &pairs
 	return nil
@@ -156,28 +173,31 @@ func (e *eswapEx) readTicker(ctx context.Context, asset *core.Asset) (*core.Tick
 
 	var (
 		funds = decimal.New(1, 3)
+		pairs = e.pairs.Pairs
+		t     = core.Ticker{
+			Exchange:  exchangeName,
+			AssetID:   asset.ID,
+			UpdatedAt: time.Unix(0, e.pairs.Timestamp*1000000),
+		}
 	)
-	bidOrder, err := fswapsdk.Route(e.pairs.Pairs, pusdAsset, asset.ID, funds)
+
+	order, err := fswapsdk.Route(pairs, pusdAsset, asset.ID, funds)
 	if err != nil {
 		return nil, err
 	}
-	askOrder, err := fswapsdk.ReverseRoute(e.pairs.Pairs, asset.ID, pusdAsset, funds)
-	if err != nil {
-		return nil, err
+
+	t.Price = order.PayAmount.Div(order.FillAmount).Truncate(8)
+
+	volumes := number.Values{}
+	for _, p := range pairs {
+		volumes.Set(fmt.Sprint(p.RouteID), p.Volume24h)
 	}
 
-	x := bidOrder.PayAmount.Div(bidOrder.FillAmount).Truncate(8)
-	y := askOrder.FillAmount.Div(askOrder.PayAmount).Truncate(8)
-
-	t := &core.Ticker{
-		Exchange: exchangeName,
-		AssetID:  asset.ID,
-
-		UpdatedAt: time.Unix(0, e.pairs.Timestamp*1000000),
-		AskPrice:  decimal.Max(x, y),
-		BidPrice:  decimal.Min(x, y),
-		LastPrice: decimal.Avg(x, y),
+	for _, id := range fswapsdk.DecodeRoutes(order.Routes) {
+		if v := volumes.Get(fmt.Sprint(id)); t.VolumeUSD.IsZero() || v.LessThan(t.VolumeUSD) {
+			t.VolumeUSD = v
+		}
 	}
 
-	return t, nil
+	return &t, nil
 }
