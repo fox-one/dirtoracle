@@ -12,6 +12,7 @@ require (
 	github.com/go-resty/resty/v2 v2.4.0
 	github.com/go-yaml/yaml v2.1.0+incompatible
 	github.com/gofrs/uuid v4.0.0+incompatible
+	github.com/gorilla/websocket v1.4.2
 	github.com/jmoiron/sqlx v1.2.0
 	github.com/kr/pretty v0.2.1 // indirect
 	github.com/lib/pq v1.9.0

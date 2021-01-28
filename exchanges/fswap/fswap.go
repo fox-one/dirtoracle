@@ -13,7 +13,6 @@ import (
 	"github.com/fox-one/dirtoracle/pkg/number"
 	"github.com/fox-one/pkg/logger"
 	"github.com/shopspring/decimal"
-	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -46,11 +45,7 @@ func (b *fswapEx) Name() string {
 }
 
 func (f *fswapEx) Subscribe(ctx context.Context, asset *core.Asset, handler exchange.MarketHandler) error {
-	log := logger.FromContext(ctx).WithFields(logrus.Fields{
-		"ex":    exchangeName,
-		"asset": asset.Symbol,
-	})
-	ctx = logger.WithContext(ctx, log)
+	log := logger.FromContext(ctx)
 	log.Info("start")
 	defer log.Info("quit")
 
@@ -58,29 +53,36 @@ func (f *fswapEx) Subscribe(ctx context.Context, asset *core.Asset, handler exch
 		go f.syncPairs(ctx)
 	})
 
-	var lastTimestamp int64
+	var (
+		sleepDur      = time.Second
+		lastTimestamp int64
+	)
 
 	for {
 		select {
 		case <-ctx.Done():
 			return ctx.Err()
 
-		case <-time.After(time.Second):
-			if f.pairs.Timestamp <= lastTimestamp {
+		case <-time.After(sleepDur):
+			if f.pairs == nil || f.pairs.Timestamp <= lastTimestamp {
+				sleepDur = time.Second
 				continue
 			}
 
 			ticker, err := f.readTicker(ctx, asset)
 			if err != nil {
 				log.WithError(err).Errorln("readTicker failed")
+				sleepDur = time.Second
 				continue
 			}
 			if err := handler.OnTicker(ctx, asset, ticker); err != nil {
 				log.WithError(err).Errorln("OnTicker failed")
+				sleepDur = time.Second
 				continue
 			}
 
 			lastTimestamp = f.pairs.Timestamp
+			sleepDur = 10 * time.Second
 		}
 	}
 }
