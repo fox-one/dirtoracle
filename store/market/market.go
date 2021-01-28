@@ -3,6 +3,7 @@ package market
 import (
 	"context"
 	"errors"
+	"sort"
 	"sync"
 	"time"
 
@@ -43,38 +44,70 @@ func (s *marketStore) FindTickers(_ context.Context, assetID string) ([]*core.Ti
 		return nil, errors.New("tickers not avaiable")
 	}
 
-	var (
-		ts = make([]*core.Ticker, 0, len(m))
-		d  = time.Now().Add(-15 * time.Second)
-	)
+	ts := make([]*core.Ticker, 0, len(m))
+	// remove outdated prices
 	for _, t := range m {
-		if t.UpdatedAt.After(d) && t.Price.IsPositive() && t.VolumeUSD.IsPositive() {
-			ts = append(ts, t)
-		}
+		ts = append(ts, t)
 	}
-
-	if len(ts) < 3 {
-		return nil, errors.New("tickers outdated")
-	}
-
 	return ts, nil
 }
 
 func (s *marketStore) AggregateTickerPrices(ctx context.Context, assetID string) (decimal.Decimal, error) {
-	tickers, err := s.FindTickers(ctx, assetID)
+	ts, err := s.FindTickers(ctx, assetID)
 	if err != nil {
 		return decimal.Zero, err
 	}
 
-	var (
-		volume     = decimal.Zero
-		totalValue = decimal.Zero
-	)
+	sort.Slice(ts, func(i, j int) bool {
+		return ts[i].Price.LessThan(ts[j].Price)
+	})
 
-	for _, t := range tickers {
-		volume = volume.Add(t.VolumeUSD)
-		totalValue = totalValue.Add(t.Price.Mul(t.VolumeUSD))
+	{
+		var (
+			d     = time.Now().Add(-15 * time.Second)
+			index = 0
+		)
+
+		for _, t := range ts {
+			// validate ticker:
+			// 	price must be positive
+			// 	volume must be positive
+			// 	updated within 15s
+			if t.Price.IsPositive() &&
+				t.VolumeUSD.IsPositive() &&
+				t.UpdatedAt.After(d) {
+				ts[index] = t
+				index++
+			}
+		}
+
+		if index < 2 {
+			return decimal.Zero, errors.New("no enough valid tickers")
+		}
+		ts = ts[:index]
 	}
 
-	return totalValue.Div(volume).Truncate(8), nil
+	{
+		var (
+			index      = 0
+			one        = decimal.New(1, 0)
+			threshold  = decimal.New(5, -2)
+			mid        = ts[len(ts)/2].Price
+			volume     = decimal.Zero
+			totalValue = decimal.Zero
+		)
+
+		for _, t := range ts {
+			// 	price diff less than threshold
+			if t.Price.Div(mid).Sub(one).Abs().LessThan(threshold) {
+				index++
+				volume = volume.Add(t.VolumeUSD)
+				totalValue = totalValue.Add(t.Price.Mul(t.VolumeUSD))
+			}
+		}
+		if index >= 2 {
+			return totalValue.Div(volume).Truncate(8), nil
+		}
+	}
+	return decimal.Zero, errors.New("no enough valid tickers")
 }
