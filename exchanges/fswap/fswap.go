@@ -82,7 +82,7 @@ func (f *fswapEx) Subscribe(ctx context.Context, asset *core.Asset, handler exch
 			}
 
 			lastTimestamp = f.pairs.Timestamp
-			sleepDur = 10 * time.Second
+			sleepDur = 3 * time.Second
 		}
 	}
 }

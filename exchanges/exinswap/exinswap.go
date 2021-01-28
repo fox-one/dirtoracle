@@ -77,7 +77,7 @@ func (e *eswapEx) Subscribe(ctx context.Context, asset *core.Asset, handler exch
 				continue
 			}
 
-			sleepDur = 10 * time.Second
+			sleepDur = 3 * time.Second
 			lastTimestamp = e.pairs.Timestamp
 		}
 	}

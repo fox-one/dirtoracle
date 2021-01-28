@@ -96,7 +96,7 @@ func (b *binanceEx) Subscribe(ctx context.Context, asset *core.Asset, handler ex
 				}
 
 				updatedAt = ticker.UpdatedAt
-				sleepDur = 10 * time.Second
+				sleepDur = 3 * time.Second
 			}
 		}
 	})
