@@ -44,7 +44,7 @@ func (b *fswapEx) Name() string {
 	return exchangeName
 }
 
-func (f *fswapEx) Subscribe(ctx context.Context, asset *core.Asset, handler exchange.MarketHandler) error {
+func (f *fswapEx) Subscribe(ctx context.Context, a *core.Asset, h exchange.Handler) error {
 	log := logger.FromContext(ctx)
 	log.Info("start")
 	defer log.Info("quit")
@@ -69,13 +69,13 @@ func (f *fswapEx) Subscribe(ctx context.Context, asset *core.Asset, handler exch
 				continue
 			}
 
-			ticker, err := f.readTicker(ctx, asset)
+			ticker, err := f.readTicker(ctx, a)
 			if err != nil {
 				log.WithError(err).Errorln("readTicker failed")
 				sleepDur = time.Second
 				continue
 			}
-			if err := handler.OnTicker(ctx, asset, ticker); err != nil {
+			if err := h.OnTicker(ctx, ticker); err != nil {
 				log.WithError(err).Errorln("OnTicker failed")
 				sleepDur = time.Second
 				continue
@@ -134,9 +134,9 @@ func (f *fswapEx) readTicker(ctx context.Context, asset *core.Asset) (*core.Tick
 		funds = decimal.New(1, 3)
 		pairs = f.pairs.Pairs
 		t     = core.Ticker{
-			Exchange:  exchangeName,
+			Source:    exchangeName,
 			AssetID:   asset.ID,
-			UpdatedAt: time.Unix(0, f.pairs.Timestamp*1000000),
+			Timestamp: f.pairs.Timestamp,
 		}
 	)
 

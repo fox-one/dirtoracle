@@ -1,8 +1,6 @@
 package binance
 
 import (
-	"time"
-
 	"github.com/fox-one/dirtoracle/core"
 	"github.com/shopspring/decimal"
 )
@@ -21,10 +19,11 @@ type (
 	}
 )
 
-func convertTicker(t *Ticker) *core.Ticker {
+func convertTicker(assetID string, t *Ticker) *core.Ticker {
 	return &core.Ticker{
-		Exchange:  exchangeName,
-		UpdatedAt: time.Unix(0, t.Timestamp*1000000),
+		AssetID:   assetID,
+		Source:    exchangeName,
+		Timestamp: t.Timestamp,
 		Price:     t.Close,
 		VolumeUSD: t.QuoteVolume,
 	}

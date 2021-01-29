@@ -22,8 +22,8 @@ type (
 
 func convertTicker(t *Ticker) *core.Ticker {
 	return &core.Ticker{
-		Exchange:  exchangeName,
-		UpdatedAt: t.Time,
+		Source:    exchangeName,
+		Timestamp: t.Time.Unix() * 1000,
 		Price:     t.Price,
 		VolumeUSD: t.Volume.Mul(t.Price),
 	}

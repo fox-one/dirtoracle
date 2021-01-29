@@ -34,7 +34,7 @@ func (b *binanceEx) Name() string {
 	return exchangeName
 }
 
-func (b *binanceEx) Subscribe(ctx context.Context, asset *core.Asset, handler exchange.MarketHandler) error {
+func (b *binanceEx) Subscribe(ctx context.Context, a *core.Asset, h exchange.Handler) error {
 	log := logger.FromContext(ctx)
 	log.Info("start")
 	defer log.Info("quit")
@@ -45,7 +45,7 @@ func (b *binanceEx) Subscribe(ctx context.Context, asset *core.Asset, handler ex
 	)
 
 	g.Go(func() error {
-		pairSymbol := b.pairSymbol(b.assetSymbol(asset.Symbol))
+		pairSymbol := b.pairSymbol(b.assetSymbol(a.Symbol))
 		stream := strings.ToLower(pairSymbol) + "@miniTicker"
 		url := fmt.Sprintf("%s/stream?streams=%s", WebsocketEndpoint, stream)
 
@@ -69,14 +69,14 @@ func (b *binanceEx) Subscribe(ctx context.Context, asset *core.Asset, handler ex
 				log.WithField("stream", stream).Debugln("receive unknown message")
 				continue
 			}
-			ticker = convertTicker(&msg.Ticker)
+			ticker = convertTicker(a.ID, &msg.Ticker)
 		}
 	})
 
 	g.Go(func() error {
 		var (
 			sleepDur  = time.Second
-			updatedAt time.Time
+			updatedAt int64
 		)
 		for {
 			select {
@@ -84,18 +84,18 @@ func (b *binanceEx) Subscribe(ctx context.Context, asset *core.Asset, handler ex
 				return ctx.Err()
 
 			case <-time.After(sleepDur):
-				if ticker == nil || ticker.UpdatedAt.Before(updatedAt) {
+				if ticker == nil || ticker.Timestamp == updatedAt {
 					sleepDur = time.Second
 					continue
 				}
-				ticker.AssetID = asset.ID
-				if err := handler.OnTicker(ctx, asset, ticker); err != nil {
+
+				if err := h.OnTicker(ctx, ticker); err != nil {
 					log.WithError(err).Errorln("OnTicker failed")
 					sleepDur = time.Second
 					continue
 				}
 
-				updatedAt = ticker.UpdatedAt
+				updatedAt = ticker.Timestamp
 				sleepDur = 3 * time.Second
 			}
 		}

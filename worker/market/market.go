@@ -15,7 +15,7 @@ import (
 )
 
 type Markets struct {
-	channels  []*core.Channel
+	feeds     []*core.FeedConfig
 	markets   core.MarketStore
 	exchanges map[string]exchange.Interface
 
@@ -24,21 +24,18 @@ type Markets struct {
 
 func New(
 	markets core.MarketStore,
-	channels []*core.Channel,
+	feeds []*core.FeedConfig,
 	exchanges map[string]exchange.Interface,
 ) worker.Worker {
 	m := &Markets{
-		channels:  channels,
+		feeds:     feeds,
 		markets:   markets,
 		exchanges: exchanges,
 		tw:        timingwheel.NewTimingWheel(time.Second, 5),
 	}
 
-	for _, c := range channels {
-		if c.Asset == nil || c.Asset.ID != c.AssetID {
-			panic(fmt.Errorf("invalid asset channel: %s", c.AssetID))
-		}
-		for _, e := range c.Exchanges {
+	for _, c := range feeds {
+		for _, e := range c.Sources {
 			m.mustExchange(e)
 		}
 	}
@@ -47,11 +44,11 @@ func New(
 }
 
 // MarketHandler Implementation
-func (m *Markets) OnTicker(ctx context.Context, asset *core.Asset, ticker *core.Ticker) error {
+func (m *Markets) OnTicker(ctx context.Context, ticker *core.Ticker) error {
 	logger.FromContext(ctx).WithFields(logrus.Fields{
-		"price":      ticker.Price,
-		"volume":     ticker.VolumeUSD,
-		"updated_at": ticker.UpdatedAt,
+		"price":     ticker.Price,
+		"volume":    ticker.VolumeUSD,
+		"timestamp": ticker.Timestamp,
 	}).Debugln("OnTicker")
 	return m.markets.SaveTicker(ctx, ticker)
 }
@@ -63,16 +60,16 @@ func (m *Markets) Run(ctx context.Context) error {
 	m.tw.Start()
 	defer m.tw.Stop()
 
-	for _, c := range m.channels {
+	for _, c := range m.feeds {
 		c := c
-		for _, e := range c.Exchanges {
+		for _, e := range c.Sources {
 			e := e
 			log := log.WithFields(logrus.Fields{
-				"symbol": c.Asset.Symbol,
+				"symbol": c.Symbol,
 				"ex":     e,
 			})
 			ctx = logger.WithContext(ctx, log)
-			go m.subscribe(ctx, c.Asset, e)
+			go m.subscribe(ctx, &c.Asset, e)
 
 		}
 	}

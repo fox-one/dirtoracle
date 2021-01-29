@@ -2,18 +2,16 @@ package core
 
 import (
 	"context"
-	"time"
 
 	"github.com/shopspring/decimal"
 )
 
 type (
 	Ticker struct {
-		Exchange string `json:"exchange,omitempty"`
-		AssetID  string `json:"asset_id,omitempty"`
-
-		UpdatedAt time.Time       `json:"updated_at,omitempty"`
-		Price     decimal.Decimal `json:"last_price,omitempty"`
+		AssetID   string          `json:"asset_id"`
+		Source    string          `json:"source,omitempty"`
+		Timestamp int64           `json:"timestamp,omitempty"`
+		Price     decimal.Decimal `json:"price,omitempty"`
 		VolumeUSD decimal.Decimal `json:"volume_usd,omitempty"`
 	}
 

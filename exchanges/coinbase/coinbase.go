@@ -24,14 +24,14 @@ func (c *coinbaseEx) Name() string {
 	return exchangeName
 }
 
-func (c *coinbaseEx) Subscribe(ctx context.Context, asset *core.Asset, handler exchange.MarketHandler) error {
+func (c *coinbaseEx) Subscribe(ctx context.Context, a *core.Asset, h exchange.Handler) error {
 	log := logger.FromContext(ctx)
 	log.Info("start")
 	defer log.Info("quit")
 
 	var (
 		sleepDur   = time.Duration(rand.Int63n(int64(time.Second * 5)))
-		pairSymbol = c.pairSymbol(c.assetSymbol(asset.Symbol))
+		pairSymbol = c.pairSymbol(c.assetSymbol(a.Symbol))
 	)
 	for {
 		select {
@@ -45,8 +45,8 @@ func (c *coinbaseEx) Subscribe(ctx context.Context, asset *core.Asset, handler e
 				sleepDur = 5 * time.Second
 				continue
 			}
-			t.AssetID = asset.ID
-			if err := handler.OnTicker(ctx, asset, t); err != nil {
+			t.AssetID = a.ID
+			if err := h.OnTicker(ctx, t); err != nil {
 				log.WithError(err).Errorln("OnTicker failed")
 				sleepDur = time.Second
 				continue

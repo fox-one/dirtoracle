@@ -32,7 +32,7 @@ func (s *marketStore) SaveTicker(_ context.Context, ticker *core.Ticker) error {
 	if !ok {
 		m = tickerMap{}
 	}
-	m[ticker.Exchange] = ticker
+	m[ticker.Source] = ticker
 	s.tickers[ticker.AssetID] = m
 	s.lock.Unlock()
 	return nil
@@ -64,8 +64,8 @@ func (s *marketStore) AggregateTickerPrices(ctx context.Context, assetID string)
 
 	{
 		var (
-			d     = time.Now().Add(-15 * time.Second)
 			index = 0
+			d     = time.Now().Add(-15*time.Second).Unix() * 1000
 		)
 
 		for _, t := range ts {
@@ -75,7 +75,7 @@ func (s *marketStore) AggregateTickerPrices(ctx context.Context, assetID string)
 			// 	updated within 15s
 			if t.Price.IsPositive() &&
 				t.VolumeUSD.IsPositive() &&
-				t.UpdatedAt.After(d) {
+				t.Timestamp > d {
 				ts[index] = t
 				index++
 			}

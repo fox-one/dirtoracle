@@ -7,13 +7,13 @@ import (
 )
 
 type (
-	MarketHandler interface {
-		OnTicker(ctx context.Context, asset *core.Asset, ticker *core.Ticker) error
+	Handler interface {
+		OnTicker(ctx context.Context, ticker *core.Ticker) error
 	}
 
 	Interface interface {
 		Name() string
 		// Subscribe subscribe exchange market events
-		Subscribe(ctx context.Context, asset *core.Asset, handler MarketHandler) error
+		Subscribe(ctx context.Context, a *core.Asset, handler Handler) error
 	}
 )
