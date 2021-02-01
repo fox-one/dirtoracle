@@ -159,6 +159,7 @@ func (e *eswapEx) updatePairs(ctx context.Context) error {
 		}
 
 		if p.TradeType == "curve" {
+			pair.SwapMethod = "curve"
 			pair.FeePercent = curveFee
 		}
 
