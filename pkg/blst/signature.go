@@ -1,0 +1,55 @@
+package blst
+
+import (
+	"encoding/base64"
+	"fmt"
+	"strconv"
+
+	blst "github.com/supranational/blst/bindings/go"
+)
+
+func (s *Signature) Bytes() []byte {
+	return (*blst.P1Affine)(s).Compress()
+}
+
+func (s *Signature) FromBytes(bts []byte) error {
+	secret := new(blst.P1Affine).Uncompress(bts)
+	if secret == nil {
+		return fmt.Errorf("invalid blst public key")
+	}
+
+	*s = (Signature)(*secret)
+	return nil
+}
+
+func (s *Signature) String() string {
+	return base64.StdEncoding.EncodeToString(s.Bytes())
+}
+
+func (s *Signature) MarshalJSON() ([]byte, error) {
+	return []byte(strconv.Quote(s.String())), nil
+}
+
+func (s *Signature) UnmarshalJSON(b []byte) error {
+	unquoted, err := strconv.Unquote(string(b))
+	if err != nil {
+		return err
+	}
+
+	bts, err := base64.StdEncoding.DecodeString(unquoted)
+	if err != nil {
+		return err
+	}
+
+	return s.FromBytes(bts)
+}
+
+func AggregateSignatures(pubs []*Signature) *Signature {
+	sigsToAgg := make([]*blst.P1Affine, len(pubs))
+	for idx, p := range pubs {
+		sigsToAgg[idx] = (*blst.P1Affine)(p)
+	}
+	agSig := new(blst.P1Aggregate)
+	agSig.Aggregate(sigsToAgg, false)
+	return (*Signature)(agSig.ToAffine())
+}

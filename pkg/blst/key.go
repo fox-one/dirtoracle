@@ -1,48 +1,18 @@
 package blst
 
 import (
-	"encoding/base64"
-	"fmt"
-
 	blst "github.com/supranational/blst/bindings/go"
 )
 
-func EncodePrivateKey(key *blst.SecretKey) string {
-	return base64.StdEncoding.EncodeToString(key.Serialize())
-}
+var (
+	dst = []byte("BLS_SIG_BLS12381G1_XMD:SHA-256_SSWU_RO_NUL_")
+)
 
-func DecodePrivateKey(s string) (*blst.SecretKey, error) {
-	secret := &blst.SecretKey{}
-	secret = secret.Deserialize(decodeBase64(s))
-	if secret == nil {
-		return nil, fmt.Errorf("invalid blst private key")
-	}
-
-	return secret, nil
-}
-
-func EncodePublicKey(key *blst.P1Affine) string {
-	return base64.StdEncoding.EncodeToString(key.Serialize())
-}
-
-func DecodePublicKey(s string) (*blst.P1Affine, error) {
-	key := &blst.P1Affine{}
-	key = key.Deserialize(decodeBase64(s))
-	if key == nil {
-		return nil, fmt.Errorf("invalid blst public key")
-	}
-
-	return key, nil
-}
-
-func decodeBase64(data string) []byte {
-	if b, err := base64.StdEncoding.DecodeString(data); err == nil {
-		return b
-	}
-
-	if b, err := base64.URLEncoding.DecodeString(data); err == nil {
-		return b
-	}
-
-	return []byte(data)
-}
+type (
+	// For minimal-signature-size operations
+	PrivateKey         blst.SecretKey
+	PublicKey          blst.P2Affine
+	Signature          blst.P1Affine
+	AggregateSignature blst.P1Aggregate
+	AggregatePublicKey blst.P2Aggregate
+)
