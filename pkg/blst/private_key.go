@@ -3,10 +3,17 @@ package blst
 import (
 	"encoding/base64"
 	"fmt"
+	"math/rand"
 	"strconv"
 
 	blst "github.com/supranational/blst/bindings/go"
 )
+
+func GenerateKey() *PrivateKey {
+	var ikm = make([]byte, 32)
+	rand.Read(ikm)
+	return (*PrivateKey)(blst.KeyGen(ikm))
+}
 
 func (k *PrivateKey) Sign(msg []byte) *Signature {
 	return (*Signature)(new(blst.P1Affine).Sign((*blst.SecretKey)(k), msg, dst))

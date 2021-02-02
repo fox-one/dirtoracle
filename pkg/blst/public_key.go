@@ -49,11 +49,9 @@ func (k *PublicKey) UnmarshalJSON(b []byte) error {
 }
 
 func AggregatePublicKeys(pubs []*PublicKey) *PublicKey {
-	pksToAgg := make([]*blst.P2Affine, len(pubs))
-	for idx, p := range pubs {
-		pksToAgg[idx] = (*blst.P2Affine)(p)
-	}
 	agPk := new(blst.P2Aggregate)
-	agPk.Aggregate(pksToAgg, false)
+	for _, p := range pubs {
+		agPk.Add((*blst.P2Affine)(p), false)
+	}
 	return (*PublicKey)(agPk.ToAffine())
 }

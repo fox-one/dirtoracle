@@ -10,9 +10,7 @@ var (
 
 type (
 	// For minimal-signature-size operations
-	PrivateKey         blst.SecretKey
-	PublicKey          blst.P2Affine
-	Signature          blst.P1Affine
-	AggregateSignature blst.P1Aggregate
-	AggregatePublicKey blst.P2Aggregate
+	PrivateKey blst.SecretKey
+	PublicKey  blst.P2Affine
+	Signature  blst.P1Affine
 )

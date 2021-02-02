@@ -45,11 +45,9 @@ func (s *Signature) UnmarshalJSON(b []byte) error {
 }
 
 func AggregateSignatures(sigs []*Signature) *Signature {
-	sigsToAgg := make([]*blst.P1Affine, len(sigs))
-	for idx, p := range sigs {
-		sigsToAgg[idx] = (*blst.P1Affine)(p)
-	}
 	agSig := new(blst.P1Aggregate)
-	agSig.Aggregate(sigsToAgg, false)
+	for _, s := range sigs {
+		agSig.Add((*blst.P1Affine)(s), false)
+	}
 	return (*Signature)(agSig.ToAffine())
 }
