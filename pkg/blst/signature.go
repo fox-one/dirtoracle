@@ -44,6 +44,14 @@ func (s *Signature) UnmarshalJSON(b []byte) error {
 	return s.FromBytes(bts)
 }
 
+func (s *Signature) MarshalBinary() (data []byte, err error) {
+	return s.Bytes(), nil
+}
+
+func (s *Signature) UnmarshalBinary(data []byte) error {
+	return s.FromBytes(data)
+}
+
 func AggregateSignatures(sigs []*Signature) *Signature {
 	agSig := new(blst.P1Aggregate)
 	for _, s := range sigs {

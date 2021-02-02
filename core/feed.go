@@ -2,10 +2,9 @@ package core
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/fox-one/dirtoracle/pkg/blst"
-	"github.com/fox-one/dirtoracle/pkg/mtg"
-	"github.com/fox-one/pkg/uuid"
 	"github.com/jinzhu/gorm"
 	"github.com/lib/pq"
 	"github.com/shopspring/decimal"
@@ -45,7 +44,5 @@ type (
 )
 
 func (p PriceData) Payload() []byte {
-	asset, _ := uuid.FromString(p.AssetID)
-	bts, _ := mtg.Encode(p.Timestamp, asset, p.Price)
-	return bts
+	return []byte(fmt.Sprintf("%d:%s:%v", p.Timestamp, p.AssetID, p.Price))
 }
