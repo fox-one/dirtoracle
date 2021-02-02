@@ -5,6 +5,7 @@ import (
 
 	"github.com/fox-one/dirtoracle/core"
 	"github.com/fox-one/dirtoracle/store/asset"
+	"github.com/fox-one/dirtoracle/store/feeder"
 	"github.com/fox-one/dirtoracle/store/market"
 	"github.com/fox-one/pkg/property"
 	"github.com/fox-one/pkg/store/db"
@@ -30,4 +31,8 @@ func provideAssetStore(db *db.DB, exp time.Duration) core.AssetStore {
 
 func provideMarketStore() core.MarketStore {
 	return market.New()
+}
+
+func provideFeederStore(db *db.DB) core.FeederStore {
+	return feeder.New(db)
 }

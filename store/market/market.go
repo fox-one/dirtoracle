@@ -39,7 +39,9 @@ func (s *marketStore) SaveTicker(_ context.Context, ticker *core.Ticker) error {
 }
 
 func (s *marketStore) FindTickers(_ context.Context, assetID string) ([]*core.Ticker, error) {
+	s.lock.Lock()
 	m, ok := s.tickers[assetID]
+	s.lock.Unlock()
 	if !ok {
 		return nil, errors.New("tickers not avaiable")
 	}
@@ -52,10 +54,10 @@ func (s *marketStore) FindTickers(_ context.Context, assetID string) ([]*core.Ti
 	return ts, nil
 }
 
-func (s *marketStore) AggregateTickerPrices(ctx context.Context, assetID string) (decimal.Decimal, error) {
+func (s *marketStore) AggregateTickers(ctx context.Context, assetID string) (*core.Ticker, error) {
 	ts, err := s.FindTickers(ctx, assetID)
 	if err != nil {
-		return decimal.Zero, err
+		return nil, err
 	}
 
 	sort.Slice(ts, func(i, j int) bool {
@@ -81,33 +83,38 @@ func (s *marketStore) AggregateTickerPrices(ctx context.Context, assetID string)
 			}
 		}
 
-		if index < 2 {
-			return decimal.Zero, errors.New("no enough valid tickers")
-		}
 		ts = ts[:index]
 	}
 
-	{
+	if len(ts) > 1 {
 		var (
-			index      = 0
-			one        = decimal.New(1, 0)
-			threshold  = decimal.New(5, -2)
-			mid        = ts[len(ts)/2].Price
-			volume     = decimal.Zero
-			totalValue = decimal.Zero
+			index     = 0
+			one       = decimal.New(1, 0)
+			threshold = decimal.New(5, -2)
+			mid       = ts[len(ts)/2].Price
+			ticker    = core.Ticker{
+				Timestamp: ts[0].Timestamp,
+				AssetID:   assetID,
+				Source:    "aggregator",
+			}
 		)
 
 		for _, t := range ts {
 			// 	price diff less than threshold
 			if t.Price.Div(mid).Sub(one).Abs().LessThan(threshold) {
 				index++
-				volume = volume.Add(t.VolumeUSD)
-				totalValue = totalValue.Add(t.Price.Mul(t.VolumeUSD))
+				ticker.VolumeUSD = ticker.VolumeUSD.Add(t.VolumeUSD)
+				ticker.Price = ticker.Price.Add(t.Price.Mul(t.VolumeUSD))
+
+				if ticker.Timestamp > t.Timestamp {
+					ticker.Timestamp = t.Timestamp
+				}
 			}
 		}
-		if index >= 2 {
-			return totalValue.Div(volume).Truncate(8), nil
+		if index > 1 {
+			ticker.Price = ticker.Price.Div(ticker.VolumeUSD).Truncate(8)
+			return &ticker, nil
 		}
 	}
-	return decimal.Zero, errors.New("no enough valid tickers")
+	return nil, errors.New("no enough valid tickers")
 }

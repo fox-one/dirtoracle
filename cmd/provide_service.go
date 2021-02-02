@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/fox-one/dirtoracle/core"
-	"github.com/fox-one/dirtoracle/pkg/blst"
 	"github.com/fox-one/mixin-sdk-go"
 )
 
@@ -18,29 +17,29 @@ func provideMixinClient() *mixin.Client {
 }
 
 func provideSystem() *core.System {
-	members := make([]*core.Member, 0, len(cfg.Group.Members))
-	for _, m := range cfg.Group.Members {
-		verifyKey, err := blst.DecodePublicKey(m.VerifyKey)
-		if err != nil {
-			panic(fmt.Errorf("decode verify key for member %s failed", m.ClientID))
+	s := &core.System{
+		Admins:         cfg.Group.Admins,
+		ClientID:       cfg.Dapp.ClientID,
+		Members:        cfg.Group.Members,
+		Threshold:      cfg.Group.Threshold,
+		SignKey:        cfg.Group.SignKey,
+		ConversationID: cfg.Group.ConversationID,
+	}
+
+	if s.Me() == nil {
+		panic(fmt.Errorf("dapp is not a group member"))
+	}
+
+	d := map[int64]bool{}
+	for _, m := range s.Members {
+		if m.ID < 0 || m.ID >= 64 {
+			panic(fmt.Errorf("invalid: group member id (%d)", m.ID))
 		}
-
-		members = append(members, &core.Member{
-			ClientID:  m.ClientID,
-			VerifyKey: verifyKey,
-		})
+		if _, ok := d[m.ID]; ok {
+			panic(fmt.Errorf("repeated group member id (%d)", m.ID))
+		}
+		d[m.ID] = true
 	}
 
-	signKey, err := blst.DecodePrivateKey(cfg.Group.SignKey)
-	if err != nil {
-		panic(fmt.Errorf("decode sign key failed"))
-	}
-
-	return &core.System{
-		Admins:    cfg.Group.Admins,
-		ClientID:  cfg.Dapp.ClientID,
-		Members:   members,
-		Threshold: cfg.Group.Threshold,
-		SignKey:   signKey,
-	}
+	return s
 }

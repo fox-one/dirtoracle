@@ -1,6 +1,8 @@
 package config
 
 import (
+	"github.com/fox-one/dirtoracle/core"
+	"github.com/fox-one/dirtoracle/pkg/blst"
 	"github.com/fox-one/mixin-sdk-go"
 	"github.com/fox-one/pkg/store/db"
 	"github.com/shopspring/decimal"
@@ -24,12 +26,6 @@ type (
 		Pin          string `json:"pin"`
 	}
 
-	Member struct {
-		ClientID string `json:"client_id,omitempty"`
-		// 节点共享的用户验证签名的公钥
-		VerifyKey string `json:"verify_key,omitempty"`
-	}
-
 	Vote struct {
 		Asset  string          `json:"asset,omitempty"`
 		Amount decimal.Decimal `json:"amount,omitempty"`
@@ -39,11 +35,10 @@ type (
 		// 节点管理员 mixin id
 		Admins []string `json:"admins,omitempty"`
 		// 节点用于签名的私钥
-		SignKey string `json:"sign_key,omitempty"`
-		// 节点共享的用户解密的私钥
-		PrivateKey string   `json:"private_key,omitempty"`
-		Members    []Member `json:"members,omitempty"`
-		Threshold  uint8    `json:"threshold,omitempty"`
+		SignKey        *blst.PrivateKey `json:"sign_key,omitempty"`
+		ConversationID string           `json:"conversation_id,omitempty"`
+		Members        []*core.Member   `json:"members,omitempty"`
+		Threshold      uint8            `json:"threshold,omitempty"`
 
 		Vote Vote `json:"vote,omitempty"`
 	}

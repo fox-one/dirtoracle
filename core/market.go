@@ -19,6 +19,6 @@ type (
 		// ticker
 		SaveTicker(ctx context.Context, ticker *Ticker) error
 		FindTickers(ctx context.Context, assetID string) ([]*Ticker, error)
-		AggregateTickerPrices(ctx context.Context, assetID string) (decimal.Decimal, error)
+		AggregateTickers(ctx context.Context, assetID string) (*Ticker, error)
 	}
 )
