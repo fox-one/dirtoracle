@@ -44,9 +44,9 @@ func (s *Signature) UnmarshalJSON(b []byte) error {
 	return s.FromBytes(bts)
 }
 
-func AggregateSignatures(pubs []*Signature) *Signature {
-	sigsToAgg := make([]*blst.P1Affine, len(pubs))
-	for idx, p := range pubs {
+func AggregateSignatures(sigs []*Signature) *Signature {
+	sigsToAgg := make([]*blst.P1Affine, len(sigs))
+	for idx, p := range sigs {
 		sigsToAgg[idx] = (*blst.P1Affine)(p)
 	}
 	agSig := new(blst.P1Aggregate)
