@@ -86,20 +86,20 @@ func (s *System) MergeProposals(p0, p1 *PriceProposal) *PriceProposal {
 }
 
 func (s *System) SignProposal(p *PriceProposal) *PriceProposal {
-	mask := s.Me().Mask()
+	me := s.Me()
 	p1 := &PriceProposal{
 		Signatures: map[int64]*blst.Signature{
-			mask: s.SignKey.Sign(p.Payload()),
+			me.ID: s.SignKey.Sign(p.Payload()),
 		},
 	}
-	p1.Mask = mask
+	p1.Mask = me.Mask()
 	return s.MergeProposals(p, p1)
 }
 
 func (s *System) VerifyData(p *PriceData) bool {
 	var pubs []*blst.PublicKey
 	for _, m := range s.Members {
-		if p.Mask&(0x1<<m.ID) == 1 {
+		if p.Mask&(0x1<<m.ID) != 0 {
 			pubs = append(pubs, m.VerifyKey)
 		}
 	}
