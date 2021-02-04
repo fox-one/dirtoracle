@@ -23,7 +23,7 @@ func New() core.MarketStore {
 
 type marketStore struct {
 	tickers map[string]tickerMap
-	lock    sync.Mutex
+	lock    sync.RWMutex
 }
 
 func (s *marketStore) SaveTicker(_ context.Context, ticker *core.Ticker) error {
@@ -39,10 +39,10 @@ func (s *marketStore) SaveTicker(_ context.Context, ticker *core.Ticker) error {
 }
 
 func (s *marketStore) FindTickers(_ context.Context, assetID string) ([]*core.Ticker, error) {
-	s.lock.Lock()
+	s.lock.RLock()
 	m, ok := s.tickers[assetID]
-	s.lock.Unlock()
 	if !ok {
+		s.lock.RUnlock()
 		return nil, errors.New("tickers not avaiable")
 	}
 
@@ -51,6 +51,7 @@ func (s *marketStore) FindTickers(_ context.Context, assetID string) ([]*core.Ti
 	for _, t := range m {
 		ts = append(ts, t)
 	}
+	s.lock.RUnlock()
 	return ts, nil
 }
 
