@@ -24,7 +24,7 @@ type (
 	}
 )
 
-func (m *Member) Mask() int64 {
+func (m *Member) Mask() uint64 {
 	return 0x1 << m.ID
 }
 
@@ -74,7 +74,7 @@ func (s *System) MergeProposals(p0, p1 *PriceProposal) *PriceProposal {
 	}
 
 	if len(sigMap) >= int(s.Threshold) {
-		sigs := make([]*blst.Signature, len(p.Signatures))
+		sigs := make([]*blst.Signature, 0, len(sigMap))
 		for _, s := range sigMap {
 			sigs = append(sigs, s)
 		}

@@ -22,3 +22,13 @@ type (
 		AggregateTickers(ctx context.Context, assetID string) (*Ticker, error)
 	}
 )
+
+func (t *Ticker) ExportProposal() *PriceProposal {
+	return &PriceProposal{
+		PriceData: PriceData{
+			AssetID:   t.AssetID,
+			Timestamp: t.Timestamp,
+			Price:     t.Price,
+		},
+	}
+}

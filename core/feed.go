@@ -20,7 +20,7 @@ type (
 		Timestamp int64           `json:"timestamp,omitempty"`
 		AssetID   string          `json:"asset_id,omitempty"`
 		Price     decimal.Decimal `json:"price,omitempty"`
-		Mask      int64           `json:"mask,omitempty"`
+		Mask      uint64          `json:"mask,omitempty"`
 		Signature *blst.Signature `json:"signature,omitempty"`
 	}
 
