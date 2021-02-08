@@ -17,16 +17,16 @@ type (
 	}
 
 	PriceData struct {
-		Timestamp int64           `json:"timestamp,omitempty"`
-		AssetID   string          `json:"asset_id,omitempty"`
-		Price     decimal.Decimal `json:"price,omitempty"`
-		Signature *CosiSignature  `json:"signature,omitempty"`
+		Timestamp int64           `json:"t,omitempty"`
+		AssetID   string          `json:"a,omitempty"`
+		Price     decimal.Decimal `json:"p,omitempty"`
+		Signature *CosiSignature  `json:"s,omitempty"`
 	}
 
 	PriceProposal struct {
 		PriceData
 
-		Signatures map[int64]*blst.Signature `json:"signatures,omitempty"`
+		Signatures map[int64]*blst.Signature `json:"sigs,omitempty"`
 	}
 
 	Feeder struct {
