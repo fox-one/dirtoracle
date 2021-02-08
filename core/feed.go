@@ -20,8 +20,7 @@ type (
 		Timestamp int64           `json:"timestamp,omitempty"`
 		AssetID   string          `json:"asset_id,omitempty"`
 		Price     decimal.Decimal `json:"price,omitempty"`
-		Mask      uint64          `json:"mask,omitempty"`
-		Signature *blst.Signature `json:"signature,omitempty"`
+		Signature *CosiSignature  `json:"signature,omitempty"`
 	}
 
 	PriceProposal struct {
@@ -40,6 +39,7 @@ type (
 	FeederStore interface {
 		SaveFeeder(ctx context.Context, f *Feeder) error
 		AllFeeders(ctx context.Context) ([]*Feeder, error)
+		FindFeeders(ctx context.Context, assetID string) ([]*Feeder, error)
 	}
 )
 

@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/fox-one/dirtoracle/core"
+	"github.com/fox-one/dirtoracle/service/wallet"
 	"github.com/fox-one/mixin-sdk-go"
 )
 
@@ -16,6 +17,10 @@ func provideMixinClient() *mixin.Client {
 	return c
 }
 
+func provideWalletService(c *mixin.Client) core.WalletService {
+	return wallet.New(c, cfg.Dapp.Pin)
+}
+
 func provideSystem() *core.System {
 	s := &core.System{
 		Admins:         cfg.Group.Admins,
@@ -24,6 +29,8 @@ func provideSystem() *core.System {
 		Threshold:      cfg.Group.Threshold,
 		SignKey:        cfg.Group.SignKey,
 		ConversationID: cfg.Group.ConversationID,
+		GasAsset:       cfg.Gas.Asset,
+		GasAmount:      cfg.Gas.Amount,
 	}
 
 	if s.Me() == nil {

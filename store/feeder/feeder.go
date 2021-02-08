@@ -42,3 +42,11 @@ func (s *feederStore) AllFeeders(_ context.Context) ([]*core.Feeder, error) {
 	}
 	return feeders, nil
 }
+
+func (s *feederStore) FindFeeders(ctx context.Context, assetID string) ([]*core.Feeder, error) {
+	var feeders []*core.Feeder
+	if err := s.db.View().Where("asset_id = ?", assetID).Find(&feeders).Error; err != nil {
+		return nil, err
+	}
+	return feeders, nil
+}

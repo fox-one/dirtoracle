@@ -13,6 +13,7 @@ type (
 		DB    db.Config `json:"db"`
 		Dapp  Dapp      `json:"dapp"`
 		Group Group     `json:"group,omitempty"`
+		Gas   Gas       `json:"gas,omitempty"`
 	}
 
 	Redis struct {
@@ -26,7 +27,7 @@ type (
 		Pin          string `json:"pin"`
 	}
 
-	Vote struct {
+	Gas struct {
 		Asset  string          `json:"asset,omitempty"`
 		Amount decimal.Decimal `json:"amount,omitempty"`
 	}
@@ -39,17 +40,15 @@ type (
 		ConversationID string           `json:"conversation_id,omitempty"`
 		Members        []*core.Member   `json:"members,omitempty"`
 		Threshold      uint8            `json:"threshold,omitempty"`
-
-		Vote Vote `json:"vote,omitempty"`
 	}
 )
 
 func defaultVote(cfg *Config) {
-	if cfg.Group.Vote.Asset == "" {
-		cfg.Group.Vote.Asset = "965e5c6e-434c-3fa9-b780-c50f43cd955c"
+	if cfg.Gas.Asset == "" {
+		cfg.Gas.Asset = "965e5c6e-434c-3fa9-b780-c50f43cd955c"
 	}
 
-	if cfg.Group.Vote.Amount.IsZero() {
-		cfg.Group.Vote.Amount = decimal.NewFromInt(1)
+	if cfg.Gas.Amount.IsZero() {
+		cfg.Gas.Amount = decimal.NewFromInt(1)
 	}
 }

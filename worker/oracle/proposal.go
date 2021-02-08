@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
+	"fmt"
+	"strings"
 	"time"
 
 	"github.com/fox-one/dirtoracle/core"
@@ -36,9 +38,37 @@ func (m *Oracle) handlePriceProposal(ctx context.Context, p *core.PriceProposal)
 	})
 	ctx = logger.WithContext(ctx, log)
 
+	// 如果发送过更新数据 或者 短时间内价格变化不大，则可以直接跳过
+	if lastProposal := m.latestProposal(p.AssetID); lastProposal != nil {
+		if m.proposalKey(p) != m.proposalKey(lastProposal) {
+			var (
+				change    = p.Price.Sub(lastProposal.Price).Div(p.Price)
+				timeDelta = p.Timestamp - lastProposal.Timestamp
+				log       = log.WithFields(logrus.Fields{
+					"time_delta": timeDelta,
+					"change":     change,
+					"price":      p.Price,
+				})
+			)
+			if timeDelta < 0 {
+				log.Debugln("newer proposal has been sent")
+				return nil
+			}
+
+			if change.Abs().LessThan(m.config.PriceChangeThreshold) &&
+				timeDelta < m.config.MaxInterval.Milliseconds() {
+				log.Debugln("price diff too small")
+				return nil
+			}
+		} else if lastProposal.Signature != nil {
+			return nil
+		}
+	}
+
 	// 全新 proposal
 	if len(p.Signatures) == 0 {
-		return m.handleNewPriceProposal(ctx, p)
+		p = m.system.SignProposal(p)
+		return m.sendPriceProposal(ctx, p)
 	}
 
 	// 非法 proposal，直接遗弃
@@ -48,12 +78,12 @@ func (m *Oracle) handlePriceProposal(ctx context.Context, p *core.PriceProposal)
 
 	// 与历史 proposal 合并
 	if p1 := m.cachedProposal(p); p1 != nil {
-		// 之前已发送
+		// 之前已收集到足够签名，可直接退出
 		if p1.Signature != nil {
 			return nil
 		}
 
-		if p.Signature != nil {
+		if p.Signature == nil {
 			// 若收到的 proposal 未集齐签名，则与本地记录合并签名
 			p = m.system.MergeProposals(p1, p)
 		}
@@ -63,6 +93,7 @@ func (m *Oracle) handlePriceProposal(ctx context.Context, p *core.PriceProposal)
 	if p.Signature == nil {
 		// 若已签过名，可以直接退出
 		if _, ok := p.Signatures[m.me.ID]; ok {
+			m.cacheProposal(p)
 			return nil
 		}
 		p = m.system.SignProposal(p)
@@ -70,41 +101,18 @@ func (m *Oracle) handlePriceProposal(ctx context.Context, p *core.PriceProposal)
 		if err := m.sendPriceProposal(ctx, p); err != nil {
 			return err
 		}
-	}
 
+		m.cacheProposal(p)
+		if p.Signature == nil {
+			return nil
+		}
+	}
 	if !m.system.VerifyData(&p.PriceData) {
 		log.WithField("signature", p.Signature).Errorln("Verify PriceData failed")
 		return nil
 	}
 
 	return m.sendPriceData(ctx, p)
-}
-
-func (m *Oracle) handleNewPriceProposal(ctx context.Context, p *core.PriceProposal) error {
-	log := logger.FromContext(ctx)
-
-	if lastProposal := m.latestProposal(p.AssetID); lastProposal != nil {
-		change := p.Price.Sub(lastProposal.Price).Div(p.Price)
-		timeDelta := p.Timestamp - lastProposal.Timestamp
-		log = log.WithFields(logrus.Fields{
-			"time_delta": timeDelta,
-			"change":     change,
-			"price":      p.Price,
-		})
-		if timeDelta < 0 {
-			log.Debugln("newer proposal has been sent")
-			return nil
-		}
-
-		if change.Abs().LessThan(m.config.PriceChangeThreshold) &&
-			timeDelta < m.config.MaxInterval.Milliseconds() {
-			log.Debugln("price diff too small")
-			return nil
-		}
-	}
-
-	p = m.system.SignProposal(p)
-	return m.sendPriceProposal(ctx, p)
 }
 
 func (m *Oracle) validatePriceProposal(ctx context.Context, p *core.PriceProposal) bool {
@@ -142,43 +150,11 @@ func (m *Oracle) validatePriceProposal(ctx context.Context, p *core.PriceProposa
 	return true
 }
 
-func (m *Oracle) validatePriceData(ctx context.Context, p *core.PriceProposal) bool {
-	log := logger.FromContext(ctx)
-	if v := m.latestPriceData(p.AssetID); v != nil {
-		change := p.Price.Sub(v.Price).Div(p.Price)
-		timeDelta := p.Timestamp - v.Timestamp
-		log = log.WithFields(logrus.Fields{
-			"time_delta": timeDelta,
-			"change":     change,
-			"price":      p.Price,
-		})
-
-		if timeDelta < 0 {
-			log.Debugln("newer price data has been sent")
-			return false
-		}
-
-		if change.Abs().LessThan(m.config.PriceChangeThreshold) &&
-			timeDelta < m.config.MaxInterval.Milliseconds() {
-
-			log.Debugln("price diff too small")
-			return false
-		}
-	}
-	log.Infoln("price data")
-	return true
-}
-
 func (m *Oracle) sendPriceProposal(ctx context.Context, p *core.PriceProposal) error {
 	log := logger.FromContext(ctx).WithFields(logrus.Fields{
 		"method":    "sendPriceProposal",
 		"timestamp": p.Timestamp,
 	})
-	ctx = logger.WithContext(ctx, log)
-
-	// if !m.validatePriceData(ctx, p) {
-	// 	return nil
-	// }
 
 	bts, _ := json.MarshalIndent(p, "", "    ")
 	msg := &mixin.MessageRequest{
@@ -188,42 +164,38 @@ func (m *Oracle) sendPriceProposal(ctx context.Context, p *core.PriceProposal) e
 		Data:           base64.StdEncoding.EncodeToString(bts),
 	}
 	if err := m.client.SendMessage(ctx, msg); err != nil {
-		logger.FromContext(ctx).WithError(err).Errorln("SendMessage failed")
+		log.WithError(err).Errorln("SendMessage failed")
 		return err
 	}
 
-	log.WithField("mid", msg.MessageID).Debugln("SendMessage")
-	m.cacheProposal(p)
 	return nil
 }
 
 func (m *Oracle) sendPriceData(ctx context.Context, p *core.PriceProposal) error {
 	log := logger.FromContext(ctx)
 
-	if !m.validatePriceData(ctx, p) {
+	feeders, err := m.feeders.FindFeeders(ctx, p.AssetID)
+	if err != nil {
+		log.WithError(err).Errorln("FindFeeders failed")
+		return err
+	}
+
+	if len(feeders) == 0 {
 		return nil
 	}
 
-	// asset, _ := uuid.FromString(p.AssetID)
-	// bts, _ := mtg.Encode(p.Timestamp, asset, p.Price, p.Mask, p.Signature)
-
-	{
-		bts, _ := json.MarshalIndent(p, "", "    ")
-		u := "170e40f0-627f-4af2-acf5-0f25c009e523"
-		c := mixin.UniqueConversationID(m.system.ClientID, u)
-		if err := m.client.SendMessage(ctx, &mixin.MessageRequest{
-			ConversationID: c,
-			RecipientID:    u,
-			MessageID:      uuid.MD5(string(p.Payload())),
-			Category:       mixin.MessageCategoryPlainPost,
-			Data:           base64.StdEncoding.EncodeToString(bts),
-		}); err != nil {
-			logger.FromContext(ctx).WithError(err).Errorln("SendMessage failed")
-			return err
+	memo, _ := json.Marshal(p)
+	var ts = make([]*core.Transfer, len(feeders))
+	trace := uuid.MD5(fmt.Sprintf("price_data:%s;%d;%v;", p.AssetID, p.Timestamp, p.Price))
+	for i, f := range feeders {
+		ts[i] = &core.Transfer{
+			TraceID:   uuid.MD5(fmt.Sprintf("trace:%s;%d;%s;", trace, f.Threshold, strings.Join(f.Opponents, ";"))),
+			AssetID:   m.system.GasAsset,
+			Amount:    m.system.GasAmount,
+			Memo:      string(memo),
+			Threshold: f.Threshold,
+			Opponents: f.Opponents,
 		}
 	}
-
-	log.Infoln("cachePriceData")
-	m.cachePriceData(p)
-	return m.sendPriceProposal(ctx, p)
+	return m.wallets.CreateTransfers(ctx, ts)
 }

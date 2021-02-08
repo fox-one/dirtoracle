@@ -24,6 +24,7 @@ type (
 		feeds     []*core.FeedConfig
 		markets   core.MarketStore
 		feeders   core.FeederStore
+		wallets   core.WalletStore
 		client    *mixin.Client
 		system    *core.System
 		me        *core.Member
@@ -36,6 +37,7 @@ func New(
 	client *mixin.Client,
 	markets core.MarketStore,
 	feeders core.FeederStore,
+	wallets core.WalletStore,
 	feeds []*core.FeedConfig,
 	system *core.System,
 	config *Config,
@@ -46,6 +48,7 @@ func New(
 		feeds:     feeds,
 		markets:   markets,
 		feeders:   feeders,
+		wallets:   wallets,
 		system:    system,
 		me:        system.Me(),
 		cache:     cache.New(time.Minute*15, time.Minute),
@@ -76,6 +79,7 @@ func (m *Oracle) Run(ctx context.Context) error {
 func (m *Oracle) loopPrice(ctx context.Context) error {
 	log := logger.FromContext(ctx).WithField("worker", "oracle")
 	ctx = logger.WithContext(ctx, log)
+	var tickers = map[string]*core.Ticker{}
 
 	for {
 		select {
@@ -91,6 +95,17 @@ func (m *Oracle) loopPrice(ctx context.Context) error {
 					continue
 				}
 
+				if lastTicker, ok := tickers[feed.ID]; ok {
+					change := ticker.Price.Sub(lastTicker.Price).Div(ticker.Price)
+					timeDelta := ticker.Timestamp - lastTicker.Timestamp
+					if change.Abs().LessThan(m.config.PriceChangeThreshold) &&
+						timeDelta < m.config.MaxInterval.Milliseconds()/5 {
+
+						continue
+					}
+				}
+
+				tickers[feed.ID] = ticker
 				m.proposals <- ticker.ExportProposal()
 			}
 		}
