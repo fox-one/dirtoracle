@@ -30,9 +30,9 @@ type walletStore struct {
 	db *db.DB
 }
 
-func (s *walletStore) ListTransfers(ctx context.Context) ([]*core.Transfer, error) {
+func (s *walletStore) ListTransfers(ctx context.Context, limit int) ([]*core.Transfer, error) {
 	var ts []*core.Transfer
-	err := s.db.View().Limit(100).Find(&ts).Error
+	err := s.db.View().Limit(limit).Find(&ts).Error
 	return ts, err
 }
 

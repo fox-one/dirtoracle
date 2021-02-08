@@ -2,10 +2,15 @@ package core
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/lib/pq"
 	"github.com/shopspring/decimal"
+)
+
+var (
+	ErrInvalidTrace = errors.New("invalid trace")
 )
 
 type (
@@ -34,12 +39,12 @@ type (
 	}
 
 	WalletStore interface {
-		ListTransfers(ctx context.Context) ([]*Transfer, error)
+		ListTransfers(ctx context.Context, limit int) ([]*Transfer, error)
 		CreateTransfers(ctx context.Context, transfers []*Transfer) error
 		ExpireTransfers(ctx context.Context, transfers []*Transfer) error
 	}
 
 	WalletService interface {
-		Transfer(ctx context.Context, transfer *Transfer) (*Snapshot, error)
+		Transfer(ctx context.Context, transfer *Transfer) error
 	}
 )
