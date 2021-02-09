@@ -86,6 +86,7 @@ func (s *System) MergeProposals(p0, p1 *PriceProposal) *PriceProposal {
 			sigs = append(sigs, s)
 		}
 		p.Signature.Signature = *blst.AggregateSignatures(sigs)
+		p.Signatures = nil
 	} else {
 		p.Signatures = sigMap
 	}

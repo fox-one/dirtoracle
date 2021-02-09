@@ -87,35 +87,32 @@ func (s *marketStore) AggregateTickers(ctx context.Context, assetID string) (*co
 		ts = ts[:index]
 	}
 
-	if len(ts) > 1 {
-		var (
-			index     = 0
-			one       = decimal.New(1, 0)
-			threshold = decimal.New(5, -2)
-			mid       = ts[len(ts)/2].Price
-			ticker    = core.Ticker{
-				Timestamp: ts[0].Timestamp,
-				AssetID:   assetID,
-				Source:    "aggregator",
-			}
-		)
+	if len(ts) == 0 {
+		return nil, errors.New("no enough valid tickers")
+	}
 
-		for _, t := range ts {
-			// 	price diff less than threshold
-			if t.Price.Div(mid).Sub(one).Abs().LessThan(threshold) {
-				index++
-				ticker.VolumeUSD = ticker.VolumeUSD.Add(t.VolumeUSD)
-				ticker.Price = ticker.Price.Add(t.Price.Mul(t.VolumeUSD))
-
-				if ticker.Timestamp > t.Timestamp {
-					ticker.Timestamp = t.Timestamp
-				}
-			}
+	var (
+		one       = decimal.New(1, 0)
+		threshold = decimal.New(5, -2)
+		mid       = ts[len(ts)/2].Price
+		ticker    = core.Ticker{
+			Timestamp: ts[0].Timestamp,
+			AssetID:   assetID,
+			Source:    "aggregator",
 		}
-		if index > 1 {
-			ticker.Price = ticker.Price.Div(ticker.VolumeUSD).Truncate(8)
-			return &ticker, nil
+	)
+
+	for _, t := range ts {
+		// 	price diff less than threshold
+		if t.Price.Div(mid).Sub(one).Abs().LessThan(threshold) {
+			ticker.VolumeUSD = ticker.VolumeUSD.Add(t.VolumeUSD)
+			ticker.Price = ticker.Price.Add(t.Price.Mul(t.VolumeUSD))
+
+			if ticker.Timestamp > t.Timestamp {
+				ticker.Timestamp = t.Timestamp
+			}
 		}
 	}
-	return nil, errors.New("no enough valid tickers")
+	ticker.Price = ticker.Price.Div(ticker.VolumeUSD).Truncate(8)
+	return &ticker, nil
 }

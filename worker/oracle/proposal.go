@@ -184,6 +184,7 @@ func (m *Oracle) sendPriceData(ctx context.Context, p *core.PriceProposal) error
 		return nil
 	}
 
+	p.Signatures = nil
 	memo, _ := json.Marshal(p)
 	var ts = make([]*core.Transfer, len(feeders))
 	trace := uuid.MD5(fmt.Sprintf("price_data:%s;%d;%v;", p.AssetID, p.Timestamp, p.Price))
