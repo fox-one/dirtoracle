@@ -179,12 +179,12 @@ func (e *eswapEx) readTicker(ctx context.Context, asset *core.Asset) (*core.Tick
 		pairs = e.pairs.Pairs
 		t     = core.Ticker{
 			Source:    exchangeName,
-			AssetID:   asset.ID,
+			AssetID:   asset.AssetID,
 			Timestamp: e.pairs.Timestamp,
 		}
 	)
 
-	order, err := fswapsdk.Route(pairs, pusdAsset, asset.ID, funds)
+	order, err := fswapsdk.Route(pairs, pusdAsset, asset.AssetID, funds)
 	if err != nil {
 		return nil, err
 	}

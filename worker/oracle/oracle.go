@@ -89,13 +89,13 @@ func (m *Oracle) loopPrice(ctx context.Context) error {
 		case <-time.After(time.Second):
 			for _, feed := range m.feeds {
 				log := log.WithField("symbol", feed.Symbol)
-				ticker, err := m.markets.AggregateTickers(ctx, feed.ID)
+				ticker, err := m.markets.AggregateTickers(ctx, feed.AssetID)
 				if err != nil {
 					log.WithError(err).Errorln("AggregateTickers failed")
 					continue
 				}
 
-				if lastTicker, ok := tickers[feed.ID]; ok {
+				if lastTicker, ok := tickers[feed.AssetID]; ok {
 					change := ticker.Price.Sub(lastTicker.Price).Div(ticker.Price)
 					timeDelta := ticker.Timestamp - lastTicker.Timestamp
 					if change.Abs().LessThan(m.config.PriceChangeThreshold) &&
@@ -105,7 +105,7 @@ func (m *Oracle) loopPrice(ctx context.Context) error {
 					}
 				}
 
-				tickers[feed.ID] = ticker
+				tickers[feed.AssetID] = ticker
 				m.proposals <- ticker.ExportProposal()
 			}
 		}

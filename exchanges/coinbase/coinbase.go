@@ -45,7 +45,7 @@ func (c *coinbaseEx) Subscribe(ctx context.Context, a *core.Asset, h exchange.Ha
 				sleepDur = 5 * time.Second
 				continue
 			}
-			t.AssetID = a.ID
+			t.AssetID = a.AssetID
 			if err := h.OnTicker(ctx, t); err != nil {
 				log.WithError(err).Errorln("OnTicker failed")
 				sleepDur = time.Second

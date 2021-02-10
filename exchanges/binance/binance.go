@@ -69,7 +69,7 @@ func (b *binanceEx) Subscribe(ctx context.Context, a *core.Asset, h exchange.Han
 				log.WithField("stream", stream).Debugln("receive unknown message")
 				continue
 			}
-			ticker = convertTicker(a.ID, &msg.Ticker)
+			ticker = convertTicker(a.AssetID, &msg.Ticker)
 		}
 	})
 
