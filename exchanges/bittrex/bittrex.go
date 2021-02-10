@@ -3,7 +3,6 @@ package bittrex
 import (
 	"context"
 	"math/rand"
-	"strings"
 	"sync"
 	"time"
 
@@ -97,5 +96,5 @@ func (*bittrexEx) assetSymbol(symbol string) string {
 }
 
 func (*bittrexEx) pairSymbol(symbol string) string {
-	return strings.ToLower(symbol) + "-USD"
+	return symbol + "-USD"
 }
