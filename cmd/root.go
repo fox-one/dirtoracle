@@ -54,7 +54,7 @@ func Execute(ver string) {
 func init() {
 	cobra.OnInitialize(initConfig, initLogging, initDone)
 
-	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.mtg.yaml)")
+	rootCmd.PersistentFlags().StringVar(&cfgFile, "config", "", "config file (default is $HOME/.dirtoracle.yaml)")
 	rootCmd.PersistentFlags().BoolVar(&debugMode, "debug", false, "toggle debug mode")
 }
 
