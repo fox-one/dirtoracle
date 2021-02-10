@@ -37,7 +37,7 @@ import (
 // workerCmd represents the worker command
 var workerCmd = &cobra.Command{
 	Use:   "worker",
-	Short: "run mtg worker",
+	Short: "run dirtoracle worker",
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx := cmd.Context()
 		cfg.DB.ReadHost = ""
