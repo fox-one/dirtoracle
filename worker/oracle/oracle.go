@@ -59,7 +59,7 @@ func New(
 }
 
 func (m *Oracle) Run(ctx context.Context) error {
-	var g errgroup.Group
+	g, ctx := errgroup.WithContext(ctx)
 
 	g.Go(func() error {
 		return m.loopBlaze(ctx)

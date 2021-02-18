@@ -39,11 +39,8 @@ func (b *binanceEx) Subscribe(ctx context.Context, a *core.Asset, h exchange.Han
 	log.Info("start")
 	defer log.Info("quit")
 
-	var (
-		g      errgroup.Group
-		ticker *core.Ticker
-	)
-
+	g, ctx := errgroup.WithContext(ctx)
+	var ticker *core.Ticker
 	g.Go(func() error {
 		pairSymbol := b.pairSymbol(b.assetSymbol(a.Symbol))
 		stream := strings.ToLower(pairSymbol) + "@miniTicker"
