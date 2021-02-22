@@ -57,6 +57,7 @@ func (b *binanceEx) Subscribe(ctx context.Context, a *core.Asset, h exchange.Han
 			Stream string `json:"stream"`
 		}
 		for {
+			conn.SetReadDeadline(time.Now().Add(time.Second * 10))
 			if err := conn.ReadJSON(&msg); err != nil {
 				log.WithError(err).Errorln("read json failed")
 				return err
