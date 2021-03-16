@@ -112,7 +112,7 @@ func (m *Oracle) handlePriceProposal(ctx context.Context, p *core.PriceProposal)
 		return nil
 	}
 
-	return m.sendPriceData(ctx, p)
+	return m.sendPriceData(ctx, &p.PriceData)
 }
 
 func (m *Oracle) validatePriceProposal(ctx context.Context, p *core.PriceProposal) bool {
@@ -171,8 +171,13 @@ func (m *Oracle) sendPriceProposal(ctx context.Context, p *core.PriceProposal) e
 	return nil
 }
 
-func (m *Oracle) sendPriceData(ctx context.Context, p *core.PriceProposal) error {
+func (m *Oracle) sendPriceData(ctx context.Context, p *core.PriceData) error {
 	log := logger.FromContext(ctx)
+
+	if err := m.pdatas.SavePriceData(ctx, p); err != nil {
+		log.WithError(err).Errorln("SavePriceData failed")
+		return err
+	}
 
 	feeders, err := m.feeders.FindFeeders(ctx, p.AssetID)
 	if err != nil {
@@ -184,7 +189,6 @@ func (m *Oracle) sendPriceData(ctx context.Context, p *core.PriceProposal) error
 		return nil
 	}
 
-	p.Signatures = nil
 	memo, _ := json.Marshal(p)
 	var ts = make([]*core.Transfer, len(feeders))
 	trace := uuid.MD5(fmt.Sprintf("price_data:%s;%d;%v;", p.AssetID, p.Timestamp, p.Price))

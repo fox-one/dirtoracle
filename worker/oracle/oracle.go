@@ -25,6 +25,7 @@ type (
 		markets   core.MarketStore
 		feeders   core.FeederStore
 		wallets   core.WalletStore
+		pdatas    core.PriceDataStore
 		client    *mixin.Client
 		system    *core.System
 		me        *core.Member
@@ -38,6 +39,7 @@ func New(
 	markets core.MarketStore,
 	feeders core.FeederStore,
 	wallets core.WalletStore,
+	pdatas core.PriceDataStore,
 	feeds []*core.FeedConfig,
 	system *core.System,
 	config *Config,
@@ -49,6 +51,7 @@ func New(
 		markets:   markets,
 		feeders:   feeders,
 		wallets:   wallets,
+		pdatas:    pdatas,
 		system:    system,
 		me:        system.Me(),
 		cache:     cache.New(time.Minute*15, time.Minute),

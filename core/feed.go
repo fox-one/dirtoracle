@@ -24,8 +24,8 @@ type (
 	PriceData struct {
 		Timestamp int64           `json:"t,omitempty"`
 		AssetID   string          `json:"a,omitempty"`
-		Price     decimal.Decimal `json:"p,omitempty"`
-		Signature *CosiSignature  `json:"s,omitempty"`
+		Price     decimal.Decimal `gorm:"TYPE:DECIMAL(16,8);" json:"p,omitempty"`
+		Signature *CosiSignature  `gorm:"TYPE:TEXT;" json:"s,omitempty"`
 	}
 
 	PriceProposal struct {
@@ -45,6 +45,11 @@ type (
 		SaveFeeder(ctx context.Context, f *Feeder) error
 		AllFeeders(ctx context.Context) ([]*Feeder, error)
 		FindFeeders(ctx context.Context, assetID string) ([]*Feeder, error)
+	}
+
+	PriceDataStore interface {
+		SavePriceData(ctx context.Context, p *PriceData) error
+		LatestPriceData(ctx context.Context, asset string) (*PriceData, error)
 	}
 )
 

@@ -1,7 +1,9 @@
 package core
 
 import (
+	"database/sql/driver"
 	"encoding/base64"
+	"encoding/json"
 	"strconv"
 
 	"github.com/fox-one/dirtoracle/pkg/blst"
@@ -61,4 +63,26 @@ func (s *CosiSignature) MarshalBinary() (data []byte, err error) {
 
 func (s *CosiSignature) UnmarshalBinary(data []byte) error {
 	return s.FromBytes(data)
+}
+
+// Scan implements the sql.Scanner interface for database deserialization.
+func (s *CosiSignature) Scan(value interface{}) error {
+	var d []byte
+	switch v := value.(type) {
+	case string:
+		d = []byte(v)
+	case []byte:
+		d = v
+	}
+	var sig CosiSignature
+	if err := json.Unmarshal(d, &sig); err != nil {
+		return err
+	}
+	*s = sig
+	return nil
+}
+
+// Value implements the driver.Valuer interface for database serialization.
+func (s *CosiSignature) Value() (driver.Value, error) {
+	return s.MarshalJSON()
 }

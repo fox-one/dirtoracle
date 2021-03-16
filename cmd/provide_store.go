@@ -4,6 +4,7 @@ import (
 	"github.com/fox-one/dirtoracle/core"
 	"github.com/fox-one/dirtoracle/store/feeder"
 	"github.com/fox-one/dirtoracle/store/market"
+	"github.com/fox-one/dirtoracle/store/pricedata"
 	"github.com/fox-one/dirtoracle/store/wallet"
 	"github.com/fox-one/pkg/property"
 	"github.com/fox-one/pkg/store/db"
@@ -28,4 +29,8 @@ func provideWalletStore(db *db.DB) core.WalletStore {
 
 func provideFeederStore(db *db.DB) core.FeederStore {
 	return feeder.New(db)
+}
+
+func providePriceDataStore(db *db.DB) core.PriceDataStore {
+	return pricedata.New(db)
 }
