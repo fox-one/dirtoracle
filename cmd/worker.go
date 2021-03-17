@@ -47,7 +47,7 @@ var workerCmd = &cobra.Command{
 
 		markets := provideMarketStore()
 		exchanges := provideAllExchanges()
-		feeders := provideFeederStore(database)
+		subscribers := provideSubscriberStore(database)
 		priceDatas := providePriceDataStore(database)
 		wallets := provideWalletStore(database)
 		walletz := provideWalletService(client)
@@ -63,7 +63,7 @@ var workerCmd = &cobra.Command{
 
 		workers := []worker.Worker{
 			market.New(markets, feeds, exchanges),
-			oracle.New(client, markets, feeders, wallets, priceDatas, feeds, system, &oracleConfig),
+			oracle.New(client, markets, subscribers, wallets, priceDatas, feeds, system, &oracleConfig),
 			cashier.New(wallets, walletz),
 		}
 

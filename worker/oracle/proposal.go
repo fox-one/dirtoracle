@@ -179,20 +179,20 @@ func (m *Oracle) sendPriceData(ctx context.Context, p *core.PriceData) error {
 		return err
 	}
 
-	feeders, err := m.feeders.FindFeeders(ctx, p.AssetID)
+	subscribers, err := m.subscribers.FindSubscribers(ctx, p.AssetID)
 	if err != nil {
-		log.WithError(err).Errorln("FindFeeders failed")
+		log.WithError(err).Errorln("FindSubscribers failed")
 		return err
 	}
 
-	if len(feeders) == 0 {
+	if len(subscribers) == 0 {
 		return nil
 	}
 
 	memo, _ := json.Marshal(p)
-	var ts = make([]*core.Transfer, len(feeders))
+	var ts = make([]*core.Transfer, len(subscribers))
 	trace := uuid.MD5(fmt.Sprintf("price_data:%s;%d;%v;", p.AssetID, p.Timestamp, p.Price))
-	for i, f := range feeders {
+	for i, f := range subscribers {
 		ts[i] = &core.Transfer{
 			TraceID:   uuid.MD5(fmt.Sprintf("trace:%s;%d;%s;", trace, f.Threshold, strings.Join(f.Opponents, ";"))),
 			AssetID:   m.system.GasAsset,

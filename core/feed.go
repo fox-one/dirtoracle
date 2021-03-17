@@ -34,17 +34,17 @@ type (
 		Signatures map[int64]*blst.Signature `json:"sigs,omitempty"`
 	}
 
-	Feeder struct {
+	Subscriber struct {
 		gorm.Model
 		AssetID   string         `json:"asset_id,omitempty"`
 		Threshold uint8          `json:"threshold,omitempty"`
 		Opponents pq.StringArray `sql:"type:TEXT" json:"opponents,omitempty"`
 	}
 
-	FeederStore interface {
-		SaveFeeder(ctx context.Context, f *Feeder) error
-		AllFeeders(ctx context.Context) ([]*Feeder, error)
-		FindFeeders(ctx context.Context, assetID string) ([]*Feeder, error)
+	SubscriberStore interface {
+		SaveSubscriber(ctx context.Context, f *Subscriber) error
+		AllSubscribers(ctx context.Context) ([]*Subscriber, error)
+		FindSubscribers(ctx context.Context, assetID string) ([]*Subscriber, error)
 	}
 
 	PriceDataStore interface {

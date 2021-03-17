@@ -20,24 +20,24 @@ type (
 	}
 
 	Oracle struct {
-		config    *Config
-		feeds     []*core.FeedConfig
-		markets   core.MarketStore
-		feeders   core.FeederStore
-		wallets   core.WalletStore
-		pdatas    core.PriceDataStore
-		client    *mixin.Client
-		system    *core.System
-		me        *core.Member
-		cache     *cache.Cache
-		proposals chan *core.PriceProposal
+		config      *Config
+		feeds       []*core.FeedConfig
+		markets     core.MarketStore
+		subscribers core.SubscriberStore
+		wallets     core.WalletStore
+		pdatas      core.PriceDataStore
+		client      *mixin.Client
+		system      *core.System
+		me          *core.Member
+		cache       *cache.Cache
+		proposals   chan *core.PriceProposal
 	}
 )
 
 func New(
 	client *mixin.Client,
 	markets core.MarketStore,
-	feeders core.FeederStore,
+	subscribers core.SubscriberStore,
 	wallets core.WalletStore,
 	pdatas core.PriceDataStore,
 	feeds []*core.FeedConfig,
@@ -45,17 +45,17 @@ func New(
 	config *Config,
 ) worker.Worker {
 	m := &Oracle{
-		config:    config,
-		client:    client,
-		feeds:     feeds,
-		markets:   markets,
-		feeders:   feeders,
-		wallets:   wallets,
-		pdatas:    pdatas,
-		system:    system,
-		me:        system.Me(),
-		cache:     cache.New(time.Minute*15, time.Minute),
-		proposals: make(chan *core.PriceProposal),
+		config:      config,
+		client:      client,
+		feeds:       feeds,
+		markets:     markets,
+		subscribers: subscribers,
+		wallets:     wallets,
+		pdatas:      pdatas,
+		system:      system,
+		me:          system.Me(),
+		cache:       cache.New(time.Minute*15, time.Minute),
+		proposals:   make(chan *core.PriceProposal),
 	}
 
 	return m
