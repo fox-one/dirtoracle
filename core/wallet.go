@@ -26,18 +26,6 @@ type (
 		Opponents pq.StringArray  `sql:"type:varchar(1024)" json:"opponents,omitempty"`
 	}
 
-	Snapshot struct {
-		SnapshotID      string          `json:"snapshot_id"`
-		CreatedAt       time.Time       `json:"created_at,omitempty"`
-		TraceID         string          `json:"trace_id,omitempty"`
-		AssetID         string          `json:"asset_id,omitempty"`
-		OpponentID      string          `json:"opponent_id,omitempty"`
-		Source          string          `json:"source,omitempty"`
-		Amount          decimal.Decimal `json:"amount,omitempty"`
-		Memo            string          `json:"memo,omitempty"`
-		TransactionHash string          `json:"transaction_hash,omitempty"`
-	}
-
 	WalletStore interface {
 		ListTransfers(ctx context.Context, limit int) ([]*Transfer, error)
 		CreateTransfers(ctx context.Context, transfers []*Transfer) error

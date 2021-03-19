@@ -3,11 +3,9 @@ package core
 import (
 	"context"
 	"fmt"
+	"time"
 
-	"github.com/fox-one/dirtoracle/pkg/blst"
-	"github.com/jinzhu/gorm"
 	"github.com/lib/pq"
-	"github.com/shopspring/decimal"
 )
 
 type (
@@ -21,21 +19,11 @@ type (
 		Sources []string `json:"sources,omitempty"`
 	}
 
-	PriceData struct {
-		Timestamp int64           `json:"t,omitempty"`
-		AssetID   string          `json:"a,omitempty"`
-		Price     decimal.Decimal `gorm:"TYPE:DECIMAL(16,8);" json:"p,omitempty"`
-		Signature *CosiSignature  `gorm:"TYPE:TEXT;" json:"s,omitempty"`
-	}
-
-	PriceProposal struct {
-		PriceData
-
-		Signatures map[int64]*blst.Signature `json:"sigs,omitempty"`
-	}
-
 	Subscriber struct {
-		gorm.Model
+		ID        uint           `sql:"PRIMARY_KEY" json:"id"`
+		CreatedAt time.Time      `json:"created_at"`
+		UpdatedAt time.Time      `json:"updated_at"`
+		DeletedAt *time.Time     `sql:"index" json:"deleted_at"`
 		AssetID   string         `json:"asset_id,omitempty"`
 		Threshold uint8          `json:"threshold,omitempty"`
 		Opponents pq.StringArray `sql:"type:TEXT" json:"opponents,omitempty"`
@@ -45,11 +33,6 @@ type (
 		SaveSubscriber(ctx context.Context, f *Subscriber) error
 		AllSubscribers(ctx context.Context) ([]*Subscriber, error)
 		FindSubscribers(ctx context.Context, assetID string) ([]*Subscriber, error)
-	}
-
-	PriceDataStore interface {
-		SavePriceData(ctx context.Context, p *PriceData) error
-		LatestPriceData(ctx context.Context, asset string) (*PriceData, error)
 	}
 )
 
