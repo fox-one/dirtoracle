@@ -16,11 +16,6 @@ type (
 		Gas   Gas       `json:"gas,omitempty"`
 	}
 
-	Redis struct {
-		Addr string `json:"addr,omitempty"`
-		DB   int    `json:"db,omitempty"`
-	}
-
 	Dapp struct {
 		mixin.Keystore
 		ClientSecret string `json:"client_secret"`
@@ -49,6 +44,6 @@ func defaultVote(cfg *Config) {
 	}
 
 	if cfg.Gas.Amount.IsZero() {
-		cfg.Gas.Amount = decimal.NewFromInt(1)
+		cfg.Gas.Amount = decimal.New(1, -8)
 	}
 }
