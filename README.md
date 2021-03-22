@@ -43,6 +43,11 @@ type (
 
 The [Market Worker](worker/market/market.go) will collect prices every short seconds, [store the latest ticker data](store/market/market.go).
 
+The prices from different sources will be [Aggregated](store/market/market.go#L58-L118):
+
+- drop old prices (collected before 15s)
+- average price with 24 hour volumes weighted
+
 Every second, the [Oracle Worker](worker/oracle/oracle.go#L82-L116) will try to submit a new Price Proposal: the proposal will be sent to the other Nodes **only if the Price Change is greater than 1% OR the duration since last submit is longer than 5 mins**.
 
 ### Generate Price Data
