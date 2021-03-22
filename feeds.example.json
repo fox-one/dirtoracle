@@ -1,0 +1,31 @@
+[
+  {
+    "asset_id": "c6d0c728-2624-429b-8e0d-d9d19b6592fa",
+    "symbol": "BTC",
+    "sources": [
+      "4swap",
+      "binance",
+      "bitstamp",
+      "kraken",
+      "bittrex"
+    ]
+  },
+  {
+    "asset_id": "43d61dcd-e413-450d-80b8-101d5e903357",
+    "symbol": "ETH",
+    "sources": [
+      "4swap",
+      "binance",
+      "bitstamp",
+      "kraken",
+      "bittrex"
+    ]
+  },
+  {
+    "asset_id": "c94ac88f-4671-3976-b60a-09064f1811e8",
+    "symbol": "XIN",
+    "sources": [
+      "4swap"
+    ]
+  }
+]
