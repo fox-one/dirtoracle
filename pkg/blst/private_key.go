@@ -1,17 +1,24 @@
 package blst
 
 import (
+	"crypto/rand"
 	"encoding/base64"
 	"fmt"
-	"math/rand"
 	"strconv"
 
 	blst "github.com/supranational/blst/bindings/go"
 )
 
 func GenerateKey() *PrivateKey {
-	var ikm = make([]byte, 32)
-	rand.Read(ikm)
+	var (
+		ikm = make([]byte, 32)
+		s   = 0
+	)
+
+	for s < len(ikm) {
+		n, _ := rand.Reader.Read(ikm[s:])
+		s += n
+	}
 	return (*PrivateKey)(blst.KeyGen(ikm))
 }
 

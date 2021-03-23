@@ -11,8 +11,17 @@ import (
 	propertystore "github.com/fox-one/pkg/store/property"
 )
 
-func provideDatabase() *db.DB {
-	return db.MustOpen(cfg.DB)
+func provideDatabase() (*db.DB, error) {
+	database, err := db.Open(cfg.DB)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := db.Migrate(database); err != nil {
+		return nil, err
+	}
+
+	return database, nil
 }
 
 func providePropertyStore(db *db.DB) property.Store {

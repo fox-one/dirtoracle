@@ -189,7 +189,8 @@ func (m *Oracle) sendPriceData(ctx context.Context, p *core.PriceData) error {
 		return nil
 	}
 
-	memo, _ := json.Marshal(p)
+	bts, _ := p.MarshalBinary()
+	memo := base64.StdEncoding.EncodeToString(bts)
 	var ts = make([]*core.Transfer, len(subscribers))
 	trace := uuid.MD5(fmt.Sprintf("price_data:%s;%d;%v;", p.AssetID, p.Timestamp, p.Price))
 	for i, f := range subscribers {
@@ -197,7 +198,7 @@ func (m *Oracle) sendPriceData(ctx context.Context, p *core.PriceData) error {
 			TraceID:   uuid.MD5(fmt.Sprintf("trace:%s;%d;%s;", trace, f.Threshold, strings.Join(f.Opponents, ";"))),
 			AssetID:   m.system.GasAsset,
 			Amount:    m.system.GasAmount,
-			Memo:      string(memo),
+			Memo:      memo,
 			Threshold: f.Threshold,
 			Opponents: f.Opponents,
 		}

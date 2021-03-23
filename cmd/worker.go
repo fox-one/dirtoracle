@@ -41,7 +41,12 @@ var workerCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		ctx := cmd.Context()
 		cfg.DB.ReadHost = ""
-		database := provideDatabase()
+		database, err := provideDatabase()
+		if err != nil {
+			cmd.PrintErrf("provideDatabase failed: %v", err)
+			return
+		}
+
 		defer database.Close()
 		client := provideMixinClient()
 

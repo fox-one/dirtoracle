@@ -1,15 +1,13 @@
+TAG = $(shell git describe --tags --abbrev=0)
+IMAGE_VERSION = $(shell echo ${TAG} | cut -c2-)
 
 .PHONY: build
-build:
-	sh hack/build.sh local
-
-.PHONY: build-dev
-build-dev:
-	sh hack/build.sh dev
-
-.PHONY: build-prod
 build-prod:
 	sh hack/build.sh prod
 
+.PHONY: docker
+docker:
+	docker build -t dirtoracle:${IMAGE_VERSION} -t dirtoracle:latest -f ./docker/Dockerfile .
+
 clean:
-	rm -rf mtg.*
+	@rm -rf ./builds

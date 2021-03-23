@@ -5,7 +5,7 @@ import (
 )
 
 func Load(cfgFile string, cfg *Config) error {
-	config.AutomaticLoadEnv("MTG")
+	config.AutomaticLoadEnv("DIRTORACLE")
 	if err := config.LoadYaml(cfgFile, cfg); err != nil {
 		return err
 	}

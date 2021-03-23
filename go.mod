@@ -13,10 +13,10 @@ require (
 	github.com/go-playground/validator/v10 v10.4.1 // indirect
 	github.com/go-resty/resty/v2 v2.5.0
 	github.com/go-yaml/yaml v2.1.0+incompatible
+	github.com/gofrs/uuid v4.0.0+incompatible
 	github.com/gorilla/websocket v1.4.2
 	github.com/hashicorp/errwrap v1.1.0 // indirect
 	github.com/hashicorp/go-multierror v1.1.1 // indirect
-	github.com/jinzhu/gorm v1.9.16
 	github.com/leodido/go-urn v1.2.1 // indirect
 	github.com/lib/pq v1.10.0
 	github.com/mitchellh/go-homedir v1.1.0
