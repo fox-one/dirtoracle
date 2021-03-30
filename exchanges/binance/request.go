@@ -10,8 +10,7 @@ import (
 )
 
 const (
-	Endpoint          = "https://api.binance.com"
-	WebsocketEndpoint = "wss://stream.binance.com:9443"
+	Endpoint = "https://api.binance.com/api/v3"
 )
 
 var httpClient = resty.New().
@@ -33,19 +32,15 @@ func Request(ctx context.Context) *resty.Request {
 }
 
 func DecodeResponse(resp *resty.Response) ([]byte, error) {
-	var respErr Error
-	if err := json.Unmarshal(resp.Body(), &respErr); err != nil {
-		if resp.IsError() {
-			return nil, &Error{
-				Code: resp.StatusCode(),
-				Msg:  resp.Status(),
-			}
+	if resp.IsError() {
+		return nil, &Error{
+			Code: resp.StatusCode(),
+			Msg:  resp.Status(),
 		}
-
-		return nil, err
 	}
 
-	if respErr.Code > 0 {
+	var respErr Error
+	if err := json.Unmarshal(resp.Body(), &respErr); err == nil && respErr.Code > 0 {
 		return nil, &respErr
 	}
 
