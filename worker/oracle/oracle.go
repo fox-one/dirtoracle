@@ -7,7 +7,6 @@ import (
 	"github.com/fox-one/dirtoracle/core"
 	"github.com/fox-one/dirtoracle/worker"
 	"github.com/fox-one/mixin-sdk-go"
-	"github.com/pandodao/blst"
 	"github.com/patrickmn/go-cache"
 	"github.com/shopspring/decimal"
 	"golang.org/x/sync/errgroup"
@@ -32,7 +31,6 @@ type (
 func New(
 	exchanges []core.Exchange,
 	client *mixin.Client,
-	signKey *blst.PrivateKey,
 	wallets core.WalletStore,
 	subscribers core.SubscriberStore,
 	system *core.System,

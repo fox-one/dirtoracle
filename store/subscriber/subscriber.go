@@ -31,7 +31,7 @@ type subscriberStore struct {
 
 func (s *subscriberStore) Save(_ context.Context, f *core.Subscriber) error {
 	return s.db.Update().Model(f).Assign(core.Subscriber{Name: f.Name}).
-		Where("callback = ?", f.Callback).
+		Where("request_url = ?", f.RequestURL).
 		FirstOrCreate(f).Error
 }
 
