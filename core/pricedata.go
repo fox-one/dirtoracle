@@ -1,9 +1,8 @@
 package core
 
 import (
-	"context"
+	"fmt"
 
-	"github.com/fox-one/dirtoracle/pkg/blst"
 	"github.com/fox-one/dirtoracle/pkg/mtg"
 	"github.com/gofrs/uuid"
 	"github.com/shopspring/decimal"
@@ -12,22 +11,15 @@ import (
 type (
 	PriceData struct {
 		Timestamp int64           `json:"t,omitempty"`
-		AssetID   string          `sql:"SIZE:36;" json:"a,omitempty"`
-		Price     decimal.Decimal `sql:"TYPE:DECIMAL(16,8);" json:"p,omitempty"`
-		Signature *CosiSignature  `sql:"TYPE:TEXT;" json:"s,omitempty"`
-	}
-
-	PriceProposal struct {
-		PriceData
-
-		Signatures map[int64]*blst.Signature `json:"sigs,omitempty"`
-	}
-
-	PriceDataStore interface {
-		SavePriceData(ctx context.Context, p *PriceData) error
-		LatestPriceData(ctx context.Context, asset string) (*PriceData, error)
+		AssetID   string          `json:"a,omitempty"`
+		Price     decimal.Decimal `json:"p,omitempty"`
+		Signature *CosiSignature  `json:"s,omitempty"`
 	}
 )
+
+func (p PriceData) Payload() []byte {
+	return []byte(fmt.Sprintf("%d:%s:%v", p.Timestamp, p.AssetID, p.Price))
+}
 
 func (p *PriceData) MarshalBinary() (data []byte, err error) {
 	asset, err := uuid.FromString(p.AssetID)
