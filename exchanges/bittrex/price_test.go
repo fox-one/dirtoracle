@@ -1,4 +1,4 @@
-package binance
+package bittrex
 
 import (
 	"context"

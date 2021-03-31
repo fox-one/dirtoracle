@@ -46,7 +46,7 @@ func (b *binanceEx) getPairs(ctx context.Context) ([]*Pair, error) {
 		Pairs []*Pair `json:"symbols,omitempty"`
 	}
 	if err := UnmarshalResponse(resp, &info); err != nil {
-		log.WithError(err).Errorln("UnmarshalResponse")
+		log.WithError(err).Errorln("getPairs.UnmarshalResponse")
 		return nil, err
 	}
 

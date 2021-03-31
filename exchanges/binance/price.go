@@ -33,7 +33,7 @@ func (b *binanceEx) getPrices(ctx context.Context) ([]*Price, error) {
 
 	var prices []*Price
 	if err := UnmarshalResponse(resp, &prices); err != nil {
-		log.WithError(err).Errorln("UnmarshalResponse")
+		log.WithError(err).Errorln("getPrices.UnmarshalResponse")
 		return nil, err
 	}
 

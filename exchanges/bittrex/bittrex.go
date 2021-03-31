@@ -2,13 +2,14 @@ package bittrex
 
 import (
 	"context"
-	"math/rand"
-	"sync"
 	"time"
 
 	"github.com/fox-one/dirtoracle/core"
-	"github.com/fox-one/dirtoracle/core/exchange"
+	"github.com/fox-one/dirtoracle/exchanges"
 	"github.com/fox-one/pkg/logger"
+	"github.com/patrickmn/go-cache"
+	"github.com/shopspring/decimal"
+	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -16,79 +17,49 @@ const (
 )
 
 type bittrexEx struct {
-	once    sync.Once
-	tickers map[string]*core.Ticker
+	*exchanges.Exchange
+	cache *cache.Cache
 }
 
-func New() exchange.Interface {
-	return &bittrexEx{}
+func New() core.Exchange {
+	return &bittrexEx{
+		Exchange: exchanges.New(),
+		cache:    cache.New(time.Minute, time.Minute),
+	}
 }
 
-func (c *bittrexEx) Name() string {
+func (*bittrexEx) Name() string {
 	return exchangeName
 }
 
-func (c *bittrexEx) Subscribe(ctx context.Context, a *core.Asset, h exchange.Handler) error {
-	log := logger.FromContext(ctx)
-	log.Info("start")
-	defer log.Info("quit")
+func (b *bittrexEx) GetPrice(ctx context.Context, a *core.Asset) (decimal.Decimal, error) {
+	// block specific asset price from this exchange,
+	//	since some assets were only be listed on 4swap,
+	//	should avoid same symbol assets
+	if b.IsAssetBlocked(ctx, a) {
+		return decimal.Zero, nil
+	}
 
-	c.once.Do(func() {
-		go c.syncPairs(ctx)
+	pairSymbol := b.pairSymbol(b.assetSymbol(a.Symbol))
+	log := logger.FromContext(ctx).WithFields(logrus.Fields{
+		"exchange": b.Name(),
+		"symbol":   a.Symbol,
+		"pair":     pairSymbol,
 	})
+	ctx = logger.WithContext(ctx, log)
 
-	var (
-		sleepDur   = time.Duration(rand.Int63n(int64(time.Second * 5)))
-		pairSymbol = c.pairSymbol(c.assetSymbol(a.Symbol))
-	)
-	for {
-		select {
-		case <-ctx.Done():
-			return ctx.Err()
+	tickers, err := b.getTickers(ctx)
+	if err != nil {
+		return decimal.Zero, err
+	}
 
-		case <-time.After(sleepDur):
-			t, ok := c.tickers[pairSymbol]
-			if !ok {
-				log.Errorln("ticker not found")
-				sleepDur = 5 * time.Second
-				continue
-			}
-			t.AssetID = a.AssetID
-			if err := h.OnTicker(ctx, t); err != nil {
-				log.WithError(err).Errorln("OnTicker failed")
-				sleepDur = time.Second
-				continue
-			}
-			sleepDur = 10 * time.Second
+	for _, ticker := range tickers {
+		if ticker.Symbol == pairSymbol {
+			return ticker.LastTradeRate, nil
 		}
 	}
-}
 
-func (c *bittrexEx) syncPairs(ctx context.Context) {
-	log := logger.FromContext(ctx).WithField("thread", "sync_pairs")
-
-	log.Info("start")
-	defer log.Info("quit")
-
-	var (
-		sleepDur = time.Millisecond
-	)
-
-	for {
-		select {
-		case <-ctx.Done():
-			return
-
-		case <-time.After(sleepDur):
-			if tickers, err := readTickers(ctx); err != nil {
-				log.WithError(err).Errorln("readTickers failed")
-				sleepDur = time.Second * 2
-			} else {
-				c.tickers = tickers
-				sleepDur = time.Second * 5
-			}
-		}
-	}
+	return decimal.Zero, nil
 }
 
 func (*bittrexEx) assetSymbol(symbol string) string {
