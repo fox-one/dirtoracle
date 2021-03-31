@@ -2,9 +2,9 @@ package config
 
 import (
 	"github.com/fox-one/dirtoracle/core"
-	"github.com/fox-one/dirtoracle/pkg/blst"
 	"github.com/fox-one/mixin-sdk-go"
 	"github.com/fox-one/pkg/store/db"
+	"github.com/pandodao/blst"
 	"github.com/shopspring/decimal"
 )
 
