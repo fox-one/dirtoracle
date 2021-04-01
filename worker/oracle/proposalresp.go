@@ -64,5 +64,6 @@ func (m *Oracle) sendPriceData(ctx context.Context, p *core.Proposal) error {
 		logger.FromContext(ctx).WithError(err).Errorln("CreateTransfers failed")
 		return err
 	}
+	logger.FromContext(ctx).Infoln("PriceData sent")
 	return nil
 }

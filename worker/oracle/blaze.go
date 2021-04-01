@@ -33,8 +33,7 @@ func (m *Oracle) OnMessage(ctx context.Context, msg *mixin.MessageView, userID s
 	}
 
 	if msg.QuoteMessageID != "" {
-		return m.handleProposalMessage(ctx, msg)
+		return m.handleProposalRespMessage(ctx, msg)
 	}
-
-	return m.handleProposalRespMessage(ctx, msg)
+	return m.handleProposalMessage(ctx, msg)
 }

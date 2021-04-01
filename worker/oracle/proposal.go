@@ -94,5 +94,7 @@ func (m *Oracle) handleProposalMessage(ctx context.Context, msg *mixin.MessageVi
 			return err
 		}
 	}
+
+	log.Infoln("ProposalResp sent")
 	return nil
 }

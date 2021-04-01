@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
-	"fmt"
 	"time"
 
 	"github.com/fox-one/dirtoracle/core"
@@ -12,7 +11,6 @@ import (
 	"github.com/fox-one/pkg/logger"
 	"github.com/fox-one/pkg/uuid"
 	"github.com/pandodao/blst"
-	"github.com/sirupsen/logrus"
 )
 
 func (m *Oracle) loopSubscribers(ctx context.Context) error {
@@ -58,6 +56,10 @@ func (m *Oracle) handleSubscriber(ctx context.Context, subscriber *core.Subscrib
 		return nil
 	}
 
+	if p := m.cachedProposal(req.TraceID); p != nil {
+		return nil
+	}
+
 	proposal := core.Proposal{
 		PriceRequest: *req,
 		Signatures:   map[uint64]*blst.Signature{},
@@ -73,7 +75,7 @@ func (m *Oracle) handleSubscriber(ctx context.Context, subscriber *core.Subscrib
 		}
 
 		price, err := m.getPrice(ctx, &req.Asset)
-		if err != nil {
+		if err != nil || price.IsZero() {
 			return err
 		}
 		proposal.ProposalRequest.Price = price
@@ -82,6 +84,7 @@ func (m *Oracle) handleSubscriber(ctx context.Context, subscriber *core.Subscrib
 		for _, s := range req.Signers {
 			if s.VerifyKey.String() == m.system.VerifyKey.String() {
 				signer = s
+				break
 			}
 		}
 
@@ -106,17 +109,12 @@ func (m *Oracle) handleSubscriber(ctx context.Context, subscriber *core.Subscrib
 }
 
 func (m *Oracle) sendProposalRequest(ctx context.Context, p *core.ProposalRequest) error {
-	log := logger.FromContext(ctx).WithFields(logrus.Fields{
-		"method":    "sendPriceProposal",
-		"timestamp": p.Timestamp,
-	})
+	log := logger.FromContext(ctx)
 
 	bts, _ := json.MarshalIndent(p, "", "    ")
-	// send the proposal with the specific trace only once in a minute
-	trace := uuid.Modify(p.TraceID, fmt.Sprintf("proposal:%d", time.Now().Unix()/60))
 	msg := &mixin.MessageRequest{
 		ConversationID: m.system.ConversationID,
-		MessageID:      trace,
+		MessageID:      uuid.New(),
 		Category:       mixin.MessageCategoryPlainPost,
 		Data:           base64.StdEncoding.EncodeToString(bts),
 	}
@@ -124,5 +122,6 @@ func (m *Oracle) sendProposalRequest(ctx context.Context, p *core.ProposalReques
 		log.WithError(err).Errorln("SendMessage failed")
 		return err
 	}
+	log.Infoln("Proposal sent")
 	return nil
 }
