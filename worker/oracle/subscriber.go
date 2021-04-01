@@ -33,7 +33,7 @@ func (m *Oracle) loopSubscribers(ctx context.Context) error {
 
 			for _, s := range subscribers {
 				s := s
-				go m.execWithTimeout(ctx, time.Second*20, func() error {
+				go m.execWithTimeout(ctx, time.Second*5, func() error {
 					return m.handleSubscriber(ctx, s)
 				})
 				time.Sleep(time.Second)
@@ -48,12 +48,19 @@ func (m *Oracle) handleSubscriber(ctx context.Context, subscriber *core.Subscrib
 
 	var req *core.PriceRequest
 
-	// TODO fetch price request from the subscriber's request url
 	{
-	}
+		resp, err := Request(ctx).Get(subscriber.RequestURL)
+		if err != nil {
+			log.WithError(err).Errorln("GET", subscriber.RequestURL)
+			return err
+		}
 
-	if req == nil {
-		return nil
+		var r core.PriceRequest
+		if err := UnmarshalResponse(resp, &r); err != nil {
+			log.WithError(err).Errorln("UnmarshalResponse", subscriber.RequestURL)
+			return err
+		}
+		req = &r
 	}
 
 	if p := m.cachedProposal(req.TraceID); p != nil {
