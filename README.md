@@ -4,56 +4,94 @@ MTG DIRT Oracle, feed real life data to the MTG Network.
 
 ## How it works
 
-A Price Data consists a unix timestamp, asset id, price and a CosiSignature. The CosiSignature is an aggregated BLST signature signed by different MTG Node.
+All Oracle Nodes will be added to a Mixin Group Chat, consensus will be reached via chat messages.
 
-**PriceData model:**
+1. **Fetch Price Requests:** _Node will scan its subscribers for their price requests_
+2. **Prepare Price Proposal:** _Node will read price from the specific exchanges, generate a proposal and send it to the group_
+3. **Proposal Response:** _Other Nodes will validate the proposal, and send back with its signature_
+4. **Generate Price Data:** _Node will generate the final Price Data and send it to the subscriber_
 
-```golang
-type PriceData struct {
-    Timestamp int64           `json:"t,omitempty"`
-    AssetID   string          `json:"a,omitempty"`
-    Price     decimal.Decimal `gorm:"TYPE:DECIMAL(16,8);" json:"p,omitempty"`
-    Signature *CosiSignature  `gorm:"TYPE:TEXT;" json:"s,omitempty"`
+### Fetch Price Requests
+
+The subscriber can choose some Oracle Nodes as its trusted nodes, submit a rest API URL to one or some of the nodes returning its [Price Requests](core/pricerequest.go#L8-L25). Only the chosen nodes's signature will be processed.
+
+The submitted node will send a GET request every 10 seconds, readding the subscriber's price requests. The API response should be like below:
+
+**Price Requests Response:**
+
+```json
+{
+    "code": 0,
+    "data": [
+        {
+            "asset_id": "c94ac88f-4671-3976-b60a-09064f1811e8",
+            "symbol": "XIN",
+            "trace_id": "f41dfcdd-9c7c-44ae-87ef-3b823469e945",
+            "receiver": {
+                "threshold": 1,
+                "members": ["170e40f0-627f-4af2-acf5-0f25c009e523"]
+            },
+            "signers": [
+                {
+                    "index": 1,
+                    "verify_key": "rhKeDmkYoNZIb96bEd5aK5Op07SA7KRFKBpgN0Z7XJRnexlt3bHczT3OLXM/OkJgGfiiLNd7vbHcsNatlAHlmZUZPs0NIxCnmuoLAYYK0mUFeRgt6MTyGeSIVUyxpE+0"
+                },
+                {
+                    "index": 2,
+                    "verify_key": "hIdfMbvIj03rGQfFWcDwEb77W2va1qSEFoPkau316AFUbR8Cm2ofXG5Tx9SB+sReFu7D3iz6yZ781p3fgjWZyilKM/gt8xpWCDWnOD4WLVrJ8DPq2Uh2wjZh/Q021BRC"
+                }
+            ],
+            "threshold": 2,
+        }
+    ]
 }
 ```
 
-The oracle system will generate Price Datas every 5 minutes OR whenever the asset's price change greater than 1%. The Datas will be sent to the subscribers via Mixin Transfers, putting the data in the transfer's memo.
-
 ### Prepare Price Proposal
 
-The MTG Node will collect prices from different sources, generate new price proposals, and send them to the specific Mixin Group.
+When a price request comes, the node will:
 
-The param "--feeds [feeds.json](feeds.example.json)" claims its feeds and data sources.
+1. Read Price from its exchanges
+2. Make a new proposal, cache it
+3. Send the proposal to the Mixin Group Chat
 
-[Exchange Interface](core/exchange/exchange.go) hanldes the data source prices, all exchanges were implemented in [Exchanges Package](exchanges/).
+#### Read Price
+
+**Different Oracle Node should represent different price sources**. The worker cmd runs with "--exchanges binance --exchanges 4swap" claiming its data sources.
+
+When required, the Node will try to read price from its sources one by one, until one valid price returned.
+
+#### Make Proposal
+
+The [Proposal Request](core/proposal.go#L21-L29) was the message body sent to the group. It contains the basic request info, the price info and a signature which was signed by the proposal node.
 
 ```golang
-type (
-    Handler interface {
-        OnTicker(ctx context.Context, ticker *core.Ticker) error
-    }
-
-    Interface interface {
-        Name() string
-        // Subscribe subscribe exchange market events
-        Subscribe(ctx context.Context, a *core.Asset, handler Handler) error
-    }
-)
+ProposalRequest struct {
+    TraceID   string          `json:"trace_id,omitempty"`
+    AssetID   string          `json:"asset_id,omitempty"`
+    Symbol    string          `json:"symbol,omitempty"`
+    Timestamp int64           `json:"timestamp,omitempty"`
+    Price     decimal.Decimal `json:"price,omitempty"`
+    Signers   []*Signer       `json:"signers,omitempty"`
+    Signature *ProposalResp   `json:"signature,omitempty"`
+}
 ```
 
-The [Market Worker](worker/market/market.go) will collect prices every short seconds, [store the latest ticker data](store/market/market.go).
+### Proposal Response
 
-The prices from different sources will be [Aggregated](store/market/market.go#L58-L118):
+When a proposal received, the node will generate a [Proposal Response](gore/proposal.go#L31-L35):
 
-- drop old prices (collected before 15s)
-- average price with 24 hour volumes weighted
-
-Every second, the [Oracle Worker](worker/oracle/oracle.go#L82-L116) will try to submit a new Price Proposal: the proposal will be sent to the other Nodes **only if the Price Change is greater than 1% OR the duration since last submit is longer than 5 mins**.
+1. Validate the proposal info, skip if the proposal was too old OR the proposal signature was invalid
+2. Read Price from its exchanges
+3. Validate the proposal's price info, skip if the price change was greater than 1%
+4. Generate the Proposal Response
+5. Reply the proposal with response
 
 ### Generate Price Data
 
-When a node received a new Price Proposal, it will validate the proposal. A proposal will be dropped if **a newer proposal was found in cache OR the price diff bewteen local price and proposal price was greater 1%**.
+When engough Proposal Responses received, the node will:
 
-If the proposal passed the validation, the node will sign the proposal message, assign its signature to the proposal and send it back to the Mixin Group. When enough signatures collected, the node will aggregrate the signatures, generate the final Price Data, store it and publish it to the subscribers.
-
-View the [Proposal Handler codes](worker/oracle/proposal.go).
+1. Validate the Proposal Response, skip if it was too old OR the response signature was invalid
+2. Aggregate the responses, generate the [CosiSig](core/cosi.go#L14-L17)
+3. Generate the final [Price Data](core/pricedata.go#L12-L17)
+4. Send the price data to the subscriber's receiver, with a Mixin Transfer
