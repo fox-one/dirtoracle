@@ -2,11 +2,8 @@ package oracle
 
 import (
 	"context"
-	"encoding/base64"
-	"encoding/json"
 	"time"
 
-	"github.com/fox-one/dirtoracle/core"
 	"github.com/fox-one/mixin-sdk-go"
 	"github.com/fox-one/pkg/logger"
 )
@@ -31,34 +28,12 @@ func (m *Oracle) loopBlaze(ctx context.Context) error {
 func (m *Oracle) OnMessage(ctx context.Context, msg *mixin.MessageView, userID string) error {
 	if msg.Category != mixin.MessageCategoryPlainPost ||
 		msg.ConversationID != m.system.ConversationID ||
-		msg.CreatedAt.Before(time.Now().Add(-m.config.MaxInterval)) {
+		msg.CreatedAt.Before(time.Now().Add(-maxDuration)) {
 		return nil
 	}
 
-	isMember := false
-	for _, m := range m.system.Members {
-		if m.ClientID == msg.UserID {
-			isMember = true
-		}
+	if msg.QuoteMessageID != "" {
+		return m.handleProposalRespMessage(ctx, msg)
 	}
-
-	if !isMember {
-		return nil
-	}
-
-	var p = new(core.PriceProposal)
-	log := logger.FromContext(ctx)
-	data, _ := base64.StdEncoding.DecodeString(msg.Data)
-	if err := json.Unmarshal(data, p); err != nil {
-		log.WithError(err).Errorln("Unmarshal PriceProposal failed")
-		return nil
-	}
-
-	if p.Signature == nil && len(p.Signatures) == 0 {
-		log.Errorln("empty signature proposal received")
-		return nil
-	}
-
-	m.proposals <- p
-	return nil
+	return m.handleProposalMessage(ctx, msg)
 }

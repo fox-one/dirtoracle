@@ -1,4 +1,4 @@
-package kraken
+package oracle
 
 import (
 	"context"
@@ -9,18 +9,13 @@ import (
 	"github.com/go-resty/resty/v2"
 )
 
-const (
-	Endpoint = "https://api.kraken.com/0/"
-)
-
 var httpClient = resty.New().
 	SetHeader("Content-Type", "application/json").
-	SetHostURL(Endpoint).
 	SetTimeout(10 * time.Second)
 
 type Error struct {
 	Code int    `json:"code,omitempty"`
-	Msg  string `json:"message,omitempty"`
+	Msg  string `json:"msg,omitempty"`
 }
 
 func (err *Error) Error() string {
@@ -33,8 +28,8 @@ func Request(ctx context.Context) *resty.Request {
 
 func DecodeResponse(resp *resty.Response) ([]byte, error) {
 	var body struct {
-		Error  []string        `json:"error,omitempty"`
-		Result json.RawMessage `json:"result,omitempty"`
+		Error
+		Data json.RawMessage `json:"data,omitempty"`
 	}
 
 	if err := json.Unmarshal(resp.Body(), &body); err != nil {
@@ -48,14 +43,11 @@ func DecodeResponse(resp *resty.Response) ([]byte, error) {
 		return nil, err
 	}
 
-	if len(body.Error) > 0 {
-		return nil, &Error{
-			Code: resp.StatusCode(),
-			Msg:  body.Error[0],
-		}
+	if body.Error.Code > 0 {
+		return nil, &body.Error
 	}
 
-	return body.Result, nil
+	return body.Data, nil
 }
 
 func UnmarshalResponse(resp *resty.Response, v interface{}) error {

@@ -10,8 +10,7 @@ import (
 )
 
 const (
-	Endpoint          = "https://api.pro.coinbase.com"
-	WebsocketEndpoint = "wss://ws-feed.pro.coinbase.com"
+	Endpoint = "https://api.pro.coinbase.com"
 )
 
 var httpClient = resty.New().
@@ -33,21 +32,16 @@ func Request(ctx context.Context) *resty.Request {
 }
 
 func DecodeResponse(resp *resty.Response) ([]byte, error) {
+	if resp.IsError() {
+		return nil, &Error{
+			Code: resp.StatusCode(),
+			Msg:  resp.Status(),
+		}
+	}
 	var respErr = Error{
 		Code: resp.StatusCode(),
 	}
-	if err := json.Unmarshal(resp.Body(), &respErr); err != nil {
-		if resp.IsError() {
-			return nil, &Error{
-				Code: resp.StatusCode(),
-				Msg:  resp.Status(),
-			}
-		}
-
-		return nil, err
-	}
-
-	if len(respErr.Msg) > 0 {
+	if err := json.Unmarshal(resp.Body(), &respErr); err == nil && len(respErr.Msg) > 0 {
 		return nil, &respErr
 	}
 

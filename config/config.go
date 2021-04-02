@@ -1,10 +1,9 @@
 package config
 
 import (
-	"github.com/fox-one/dirtoracle/core"
-	"github.com/fox-one/dirtoracle/pkg/blst"
 	"github.com/fox-one/mixin-sdk-go"
 	"github.com/fox-one/pkg/store/db"
+	"github.com/pandodao/blst"
 	"github.com/shopspring/decimal"
 )
 
@@ -28,12 +27,9 @@ type (
 	}
 
 	Group struct {
-		// 节点管理员 mixin id
-		Admins []string `json:"admins,omitempty"`
 		// 节点用于签名的私钥
 		SignKey        *blst.PrivateKey `json:"sign_key,omitempty"`
 		ConversationID string           `json:"conversation_id,omitempty"`
-		Members        []*core.Member   `json:"members,omitempty"`
 		Threshold      uint8            `json:"threshold,omitempty"`
 	}
 )

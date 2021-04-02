@@ -6,8 +6,8 @@ import (
 	"encoding/json"
 	"strconv"
 
-	"github.com/fox-one/dirtoracle/pkg/blst"
 	"github.com/fox-one/dirtoracle/pkg/mtg"
+	"github.com/pandodao/blst"
 )
 
 type (

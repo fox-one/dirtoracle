@@ -18,18 +18,16 @@ package cmd
 import (
 	"fmt"
 	"net/http"
-	"time"
 
+	"github.com/fox-one/dirtoracle/core"
 	"github.com/fox-one/dirtoracle/handler/hc"
 	"github.com/fox-one/dirtoracle/worker"
 	"github.com/fox-one/dirtoracle/worker/cashier"
-	"github.com/fox-one/dirtoracle/worker/market"
 	"github.com/fox-one/dirtoracle/worker/oracle"
 	"github.com/fox-one/pkg/logger"
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
 	"github.com/rs/cors"
-	"github.com/shopspring/decimal"
 	"github.com/spf13/cobra"
 	"golang.org/x/sync/errgroup"
 )
@@ -50,25 +48,23 @@ var workerCmd = &cobra.Command{
 		defer database.Close()
 		client := provideMixinClient()
 
-		markets := provideMarketStore()
-		exchanges := provideAllExchanges()
 		subscribers := provideSubscriberStore(database)
-		priceDatas := providePriceDataStore(database)
 		wallets := provideWalletStore(database)
 		walletz := provideWalletService(client)
 		system := provideSystem()
 
-		oracleConfig := oracle.Config{
-			MaxInterval:          time.Minute * 5,
-			PriceChangeThreshold: decimal.New(1, -2),
+		var exchanges []core.Exchange
+		{
+			m := provideAllExchanges()
+			arr, _ := cmd.Flags().GetStringArray("exchanges")
+			for _, n := range arr {
+				if e, ok := m[n]; ok {
+					exchanges = append(exchanges, e)
+				}
+			}
 		}
-
-		feedFile, _ := cmd.Flags().GetString("feeds")
-		feeds := provideFeedConfigs(feedFile)
-
 		workers := []worker.Worker{
-			market.New(markets, feeds, exchanges),
-			oracle.New(client, markets, subscribers, wallets, priceDatas, feeds, system, &oracleConfig),
+			oracle.New(exchanges, client, wallets, subscribers, system),
 			cashier.New(wallets, walletz),
 		}
 
@@ -112,5 +108,5 @@ var workerCmd = &cobra.Command{
 func init() {
 	rootCmd.AddCommand(workerCmd)
 	workerCmd.Flags().Int("port", 9245, "worker api port")
-	workerCmd.Flags().String("feeds", "", "feed config file")
+	workerCmd.Flags().StringArray("exchanges", nil, "exchanges")
 }

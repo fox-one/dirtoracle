@@ -2,15 +2,14 @@ package binance
 
 import (
 	"context"
-	"fmt"
-	"strings"
 	"time"
 
 	"github.com/fox-one/dirtoracle/core"
-	"github.com/fox-one/dirtoracle/core/exchange"
+	"github.com/fox-one/dirtoracle/exchanges"
 	"github.com/fox-one/pkg/logger"
-	"github.com/gorilla/websocket"
-	"golang.org/x/sync/errgroup"
+	"github.com/patrickmn/go-cache"
+	"github.com/shopspring/decimal"
+	"github.com/sirupsen/logrus"
 )
 
 const (
@@ -18,15 +17,14 @@ const (
 )
 
 type binanceEx struct {
-	dialer websocket.Dialer
+	*exchanges.Exchange
+	cache *cache.Cache
 }
 
-func New() exchange.Interface {
+func New() core.Exchange {
 	return &binanceEx{
-		dialer: websocket.Dialer{
-			Subprotocols:   []string{"json"},
-			ReadBufferSize: 1024,
-		},
+		Exchange: exchanges.New(),
+		cache:    cache.New(time.Minute, time.Minute),
 	}
 }
 
@@ -34,72 +32,37 @@ func (b *binanceEx) Name() string {
 	return exchangeName
 }
 
-func (b *binanceEx) Subscribe(ctx context.Context, a *core.Asset, h exchange.Handler) error {
-	log := logger.FromContext(ctx)
-	log.Info("start")
-	defer log.Info("quit")
+func (b *binanceEx) GetPrice(ctx context.Context, a *core.Asset) (decimal.Decimal, error) {
+	// block specific asset price from this exchange,
+	//	since some assets were only be listed on 4swap,
+	//	should avoid same symbol assets
+	if b.IsAssetBlocked(ctx, a) {
+		return decimal.Zero, nil
+	}
 
-	g, ctx := errgroup.WithContext(ctx)
-	var ticker *core.Ticker
-	g.Go(func() error {
-		pairSymbol := b.pairSymbol(b.assetSymbol(a.Symbol))
-		stream := strings.ToLower(pairSymbol) + "@miniTicker"
-		url := fmt.Sprintf("%s/stream?streams=%s", WebsocketEndpoint, stream)
-
-		conn, _, err := b.dialer.Dial(url, nil)
-		if err != nil {
-			log.WithError(err).Errorln("dail failed")
-			return err
-		}
-
-		var msg struct {
-			Ticker Ticker `json:"data"`
-			Stream string `json:"stream"`
-		}
-		for {
-			conn.SetReadDeadline(time.Now().Add(time.Second * 10))
-			if err := conn.ReadJSON(&msg); err != nil {
-				log.WithError(err).Errorln("read json failed")
-				return err
-			}
-
-			if msg.Stream != stream {
-				log.WithField("stream", stream).Debugln("receive unknown message")
-				continue
-			}
-			ticker = convertTicker(a.AssetID, &msg.Ticker)
-		}
+	pairSymbol := b.pairSymbol(b.assetSymbol(a.Symbol))
+	log := logger.FromContext(ctx).WithFields(logrus.Fields{
+		"exchange": b.Name(),
+		"symbol":   a.Symbol,
+		"pair":     pairSymbol,
 	})
+	ctx = logger.WithContext(ctx, log)
 
-	g.Go(func() error {
-		var (
-			sleepDur  = time.Second
-			updatedAt int64
-		)
-		for {
-			select {
-			case <-ctx.Done():
-				return ctx.Err()
+	if ok, err := b.supported(ctx, pairSymbol); err != nil || !ok {
+		return decimal.Zero, err
+	}
 
-			case <-time.After(sleepDur):
-				if ticker == nil || ticker.Timestamp == updatedAt {
-					sleepDur = time.Second
-					continue
-				}
+	prices, err := b.getPrices(ctx)
+	if err != nil {
+		return decimal.Zero, err
+	}
 
-				if err := h.OnTicker(ctx, ticker); err != nil {
-					log.WithError(err).Errorln("OnTicker failed")
-					sleepDur = time.Second
-					continue
-				}
-
-				updatedAt = ticker.Timestamp
-				sleepDur = 3 * time.Second
-			}
+	for _, price := range prices {
+		if price.Symbol == pairSymbol {
+			return price.Price, nil
 		}
-	})
-
-	return g.Wait()
+	}
+	return decimal.Zero, nil
 }
 
 func (b *binanceEx) assetSymbol(symbol string) string {

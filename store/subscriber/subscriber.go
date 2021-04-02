@@ -29,23 +29,15 @@ type subscriberStore struct {
 	db *db.DB
 }
 
-func (s *subscriberStore) SaveSubscriber(_ context.Context, f *core.Subscriber) error {
-	return s.db.Update().Model(f).
-		Where("asset_id = ? AND threshold = ? AND opponents = ?", f.AssetID, f.Threshold, f.Opponents).
+func (s *subscriberStore) Save(_ context.Context, f *core.Subscriber) error {
+	return s.db.Update().Model(f).Assign(core.Subscriber{Name: f.Name}).
+		Where("request_url = ?", f.RequestURL).
 		FirstOrCreate(f).Error
 }
 
-func (s *subscriberStore) AllSubscribers(_ context.Context) ([]*core.Subscriber, error) {
+func (s *subscriberStore) All(_ context.Context) ([]*core.Subscriber, error) {
 	var subscribers []*core.Subscriber
 	if err := s.db.View().Find(&subscribers).Error; err != nil {
-		return nil, err
-	}
-	return subscribers, nil
-}
-
-func (s *subscriberStore) FindSubscribers(ctx context.Context, assetID string) ([]*core.Subscriber, error) {
-	var subscribers []*core.Subscriber
-	if err := s.db.View().Where("asset_id = ?", assetID).Find(&subscribers).Error; err != nil {
 		return nil, err
 	}
 	return subscribers, nil
