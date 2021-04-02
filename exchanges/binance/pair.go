@@ -50,7 +50,7 @@ func (b *binanceEx) getPairs(ctx context.Context) ([]*Pair, error) {
 		return nil, err
 	}
 
-	b.cache.Set(pairsKey, info.Pairs, time.Hour)
+	b.cache.Set(pairsKey, info.Pairs, time.Minute*10)
 	return info.Pairs, nil
 }
 

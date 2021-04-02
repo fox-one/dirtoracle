@@ -3,11 +3,13 @@ package cmd
 import (
 	"github.com/fox-one/dirtoracle/core"
 	"github.com/fox-one/dirtoracle/exchanges/binance"
+	"github.com/fox-one/dirtoracle/exchanges/bitfinex"
 	"github.com/fox-one/dirtoracle/exchanges/bitstamp"
 	"github.com/fox-one/dirtoracle/exchanges/bittrex"
 	"github.com/fox-one/dirtoracle/exchanges/coinbase"
 	"github.com/fox-one/dirtoracle/exchanges/exinswap"
 	"github.com/fox-one/dirtoracle/exchanges/fswap"
+	"github.com/fox-one/dirtoracle/exchanges/huobi"
 )
 
 func provideAllExchanges() map[string]core.Exchange {
@@ -17,6 +19,8 @@ func provideAllExchanges() map[string]core.Exchange {
 	coinbase := provideCoinbaseExchanges()
 	bitstamp := provideBitstampExchanges()
 	bittrex := provideBittrexExchanges()
+	bitfinex := provideBitfinexExchanges()
+	huobi := provideHuobixchanges()
 	return map[string]core.Exchange{
 		fswap.Name():    fswap,
 		eswap.Name():    eswap,
@@ -24,6 +28,8 @@ func provideAllExchanges() map[string]core.Exchange {
 		coinbase.Name(): coinbase,
 		bitstamp.Name(): bitstamp,
 		bittrex.Name():  bittrex,
+		bitfinex.Name(): bitfinex,
+		huobi.Name():    huobi,
 	}
 }
 
@@ -49,4 +55,12 @@ func provideBitstampExchanges() core.Exchange {
 
 func provideBittrexExchanges() core.Exchange {
 	return bittrex.New()
+}
+
+func provideBitfinexExchanges() core.Exchange {
+	return bitfinex.New()
+}
+
+func provideHuobixchanges() core.Exchange {
+	return huobi.New()
 }
