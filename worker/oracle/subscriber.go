@@ -11,6 +11,7 @@ import (
 	"github.com/fox-one/pkg/logger"
 	"github.com/fox-one/pkg/uuid"
 	"github.com/pandodao/blst"
+	"golang.org/x/sync/errgroup"
 )
 
 func (m *Oracle) loopSubscribers(ctx context.Context) error {
@@ -31,13 +32,14 @@ func (m *Oracle) loopSubscribers(ctx context.Context) error {
 				break
 			}
 
+			g, ctx := errgroup.WithContext(ctx)
 			for _, s := range subscribers {
 				s := s
-				go m.execWithTimeout(ctx, time.Second*5, func() error {
+				g.Go(func() error {
 					return m.handleSubscriber(ctx, s)
 				})
-				time.Sleep(time.Second)
 			}
+			g.Wait()
 			sleepDur = time.Second * 10
 		}
 	}
@@ -46,7 +48,7 @@ func (m *Oracle) loopSubscribers(ctx context.Context) error {
 func (m *Oracle) handleSubscriber(ctx context.Context, subscriber *core.Subscriber) error {
 	log := logger.FromContext(ctx)
 
-	var req *core.PriceRequest
+	var reqs []*core.PriceRequest
 
 	{
 		resp, err := Request(ctx).Get(subscriber.RequestURL)
@@ -55,13 +57,22 @@ func (m *Oracle) handleSubscriber(ctx context.Context, subscriber *core.Subscrib
 			return err
 		}
 
-		var r core.PriceRequest
-		if err := UnmarshalResponse(resp, &r); err != nil {
+		if err := UnmarshalResponse(resp, &reqs); err != nil {
 			log.WithError(err).Errorln("UnmarshalResponse", subscriber.RequestURL)
 			return err
 		}
-		req = &r
 	}
+
+	for _, req := range reqs {
+		if err := m.handlePriceRequest(ctx, subscriber, req); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+func (m *Oracle) handlePriceRequest(ctx context.Context, subscriber *core.Subscriber, req *core.PriceRequest) error {
+	log := logger.FromContext(ctx)
 
 	if p := m.cachedProposal(req.TraceID); p != nil {
 		return nil
