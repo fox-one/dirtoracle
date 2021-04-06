@@ -36,8 +36,10 @@ func (m *Oracle) loopSubscribers(ctx context.Context) error {
 			for _, s := range subscribers {
 				s := s
 				g.Go(func() error {
-					return m.handleSubscriber(ctx, s)
+					m.handleSubscriber(ctx, s)
+					return nil
 				})
+				time.Sleep(time.Second)
 			}
 			g.Wait()
 			sleepDur = time.Second * 10
@@ -64,9 +66,10 @@ func (m *Oracle) handleSubscriber(ctx context.Context, subscriber *core.Subscrib
 	}
 
 	for _, req := range reqs {
-		if err := m.handlePriceRequest(ctx, subscriber, req); err != nil {
-			return err
-		}
+		req := req
+		go m.execWithTimeout(ctx, time.Second*10, func() error {
+			return m.handlePriceRequest(ctx, subscriber, req)
+		})
 	}
 	return nil
 }
