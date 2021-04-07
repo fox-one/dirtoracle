@@ -39,7 +39,7 @@ func handle(cfg *config.Config) http.HandlerFunc {
 			{AssetID: "f5ef6b5d-cc5a-3d90-b2c0-a2fd386e7a3c", Symbol: "BOX"},
 		} {
 			requests = append(requests, &core.PriceRequest{
-				TraceID: uuid.Modify(asset.AssetID, fmt.Sprintf("price-request:%s:%d", cfg.Dapp.ClientID, time.Now().Unix()/600)),
+				TraceID: uuid.Modify(asset.AssetID, fmt.Sprintf("price-request:%s:%d", cfg.Dapp.ClientID, time.Now().Unix()/60)),
 				Asset:   asset,
 				Receiver: &core.Receiver{
 					Threshold: 1,

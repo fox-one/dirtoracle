@@ -61,7 +61,7 @@ func loopSnapshots(ctx context.Context) {
 
 				if VerifyData(&p, cfg.Signers, int(cfg.Threshold)) {
 					bts, _ := json.MarshalIndent(p, "", "    ")
-					log.Println(offset, string(bts))
+					log.Println(string(bts))
 				}
 			}
 		}
