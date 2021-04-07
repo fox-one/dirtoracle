@@ -47,6 +47,6 @@ func (b *bitstampEx) getTicker(ctx context.Context, symbol string) (*Ticker, err
 		return nil, err
 	}
 
-	b.cache.Set(cacheKey, ticker, time.Second*10)
+	b.cache.Set(cacheKey, &ticker, time.Second*10)
 	return &ticker, nil
 }

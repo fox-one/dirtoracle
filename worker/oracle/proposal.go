@@ -85,6 +85,7 @@ func (m *Oracle) handleProposalMessage(ctx context.Context, msg *mixin.MessageVi
 		reply := &mixin.MessageRequest{
 			ConversationID: msg.ConversationID,
 			QuoteMessageID: msg.MessageID,
+			RecipientID:    msg.UserID,
 			MessageID:      uuid.Modify(msg.MessageID, fmt.Sprintf("reply:%d", signer.Index)),
 			Category:       mixin.MessageCategoryPlainPost,
 			Data:           base64.StdEncoding.EncodeToString(bts),
