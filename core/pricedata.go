@@ -31,16 +31,18 @@ func (p *PriceData) MarshalBinary() (data []byte, err error) {
 
 func (p *PriceData) UnmarshalBinary(data []byte) error {
 	var (
-		d     PriceData
-		asset uuid.UUID
+		timestamp int64
+		price     decimal.Decimal
+		signature CosiSignature
+		asset     uuid.UUID
 	)
-	_, err := mtg.Scan(data, &d.Timestamp, &asset, &d.Price, d.Signature)
+	_, err := mtg.Scan(data, &timestamp, &asset, &price, &signature)
 	if err != nil {
 		return err
 	}
-	p.Timestamp = d.Timestamp
+	p.Timestamp = timestamp
 	p.AssetID = asset.String()
-	p.Price = d.Price
-	p.Signature = d.Signature
+	p.Price = price
+	p.Signature = &signature
 	return nil
 }
