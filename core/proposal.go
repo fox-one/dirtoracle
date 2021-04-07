@@ -13,7 +13,7 @@ type (
 
 	Proposal struct {
 		PriceRequest
-		ProposalRequest
+		ProposalRequest `json:"-"`
 
 		Signatures map[uint64]*blst.Signature `json:"sigs,omitempty"`
 	}
