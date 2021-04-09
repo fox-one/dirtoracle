@@ -55,7 +55,10 @@ var workerCmd = &cobra.Command{
 		system := provideSystem()
 
 		var exchanges []core.Exchange
-		var posrvs []core.PortfolioService
+		var posrvs = []core.PortfolioService{
+			provideBwatchService(),
+		}
+
 		{
 			m := provideAllExchanges()
 			arr, _ := cmd.Flags().GetStringArray("exchanges")

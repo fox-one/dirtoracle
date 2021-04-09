@@ -12,12 +12,18 @@ type (
 		GetPrice(ctx context.Context, asset *Asset) (decimal.Decimal, error)
 	}
 
-	Portfolio struct {
-		Asset
-		Amount decimal.Decimal `json:"amount"`
+	PortfolioItem struct {
+		AssetID string          `json:"asset_id"`
+		Amount  decimal.Decimal `json:"amount"`
+	}
+
+	PortfolioToken struct {
+		AssetID string           `json:"asset_id"`
+		Items   []*PortfolioItem `json:"items"`
 	}
 
 	PortfolioService interface {
-		UnpackAsset(ctx context.Context, asset *Asset) ([]*Portfolio, error)
+		Name() string
+		ListPortfolioTokens(ctx context.Context) ([]*PortfolioToken, error)
 	}
 )

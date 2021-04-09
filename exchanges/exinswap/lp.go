@@ -6,34 +6,31 @@ import (
 	"github.com/fox-one/dirtoracle/core"
 )
 
-func (f *eswapEx) UnpackAsset(ctx context.Context, asset *core.Asset) ([]*core.Portfolio, error) {
+func (f *eswapEx) ListPortfolioTokens(ctx context.Context) ([]*core.PortfolioToken, error) {
 	pairs, err := f.getPairs(ctx)
 	if err != nil {
 		return nil, err
 	}
 
+	var tokens []*core.PortfolioToken
 	for _, pair := range pairs {
-		if pair.LiquidityAssetID == asset.AssetID {
-			if pair.Liquidity.IsZero() {
-				return nil, nil
-			}
-
-			return []*core.Portfolio{
-				{
-					Asset: core.Asset{
-						AssetID: pair.BaseAssetID,
-					},
-					Amount: pair.BaseAmount.DivRound(pair.Liquidity, 8),
-				},
-				{
-					Asset: core.Asset{
-						AssetID: pair.QuoteAssetID,
-					},
-					Amount: pair.QuoteAmount.DivRound(pair.Liquidity, 8),
-				},
-			}, nil
+		if pair.Liquidity.IsZero() {
+			continue
 		}
+		tokens = append(tokens, &core.PortfolioToken{
+			AssetID: pair.LiquidityAssetID,
+			Items: []*core.PortfolioItem{
+				{
+					AssetID: pair.BaseAssetID,
+					Amount:  pair.BaseAmount.DivRound(pair.Liquidity, 8),
+				},
+				{
+					AssetID: pair.QuoteAssetID,
+					Amount:  pair.QuoteAmount.DivRound(pair.Liquidity, 8),
+				},
+			},
+		})
 	}
 
-	return nil, nil
+	return tokens, nil
 }

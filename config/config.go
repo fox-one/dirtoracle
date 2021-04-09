@@ -9,16 +9,21 @@ import (
 
 type (
 	Config struct {
-		DB    db.Config `json:"db"`
-		Dapp  Dapp      `json:"dapp"`
-		Group Group     `json:"group,omitempty"`
-		Gas   Gas       `json:"gas,omitempty"`
+		DB     db.Config `json:"db"`
+		Bwatch Bwatch    `json:"bwatch"`
+		Dapp   Dapp      `json:"dapp"`
+		Group  Group     `json:"group,omitempty"`
+		Gas    Gas       `json:"gas,omitempty"`
 	}
 
 	Dapp struct {
 		mixin.Keystore
 		ClientSecret string `json:"client_secret"`
 		Pin          string `json:"pin"`
+	}
+
+	Bwatch struct {
+		ApiBase string `json:"api_base"`
 	}
 
 	Gas struct {

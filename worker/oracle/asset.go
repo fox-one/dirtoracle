@@ -8,7 +8,7 @@ import (
 	"github.com/fox-one/pkg/logger"
 )
 
-func (m *Oracle) loopTopAssetss(ctx context.Context) error {
+func (m *Oracle) loopTopAssets(ctx context.Context) error {
 	log := logger.FromContext(ctx).WithField("loop", "top-assets")
 	ctx = logger.WithContext(ctx, log)
 

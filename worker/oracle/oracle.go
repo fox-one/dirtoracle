@@ -65,7 +65,11 @@ func (m *Oracle) Run(ctx context.Context) error {
 	})
 
 	g.Go(func() error {
-		return m.loopTopAssetss(ctx)
+		return m.loopTopAssets(ctx)
+	})
+
+	g.Go(func() error {
+		return m.loopPortfolioTokens(ctx)
 	})
 
 	return g.Wait()
