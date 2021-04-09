@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"github.com/fox-one/dirtoracle/core"
+	"github.com/fox-one/dirtoracle/service/asset"
 	"github.com/fox-one/dirtoracle/service/wallet"
 	"github.com/fox-one/mixin-sdk-go"
 )
@@ -13,6 +14,10 @@ func provideMixinClient() *mixin.Client {
 	}
 
 	return c
+}
+
+func provideAssetService(c *mixin.Client) core.AssetService {
+	return asset.New(c)
 }
 
 func provideWalletService(c *mixin.Client) core.WalletService {

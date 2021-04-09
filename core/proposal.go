@@ -6,11 +6,6 @@ import (
 )
 
 type (
-	Asset struct {
-		AssetID string `json:"asset_id,omitempty"`
-		Symbol  string `json:"symbol,omitempty"`
-	}
-
 	Proposal struct {
 		PriceRequest
 		ProposalRequest `json:"-"`
