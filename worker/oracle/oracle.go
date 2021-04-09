@@ -21,6 +21,8 @@ type (
 	Oracle struct {
 		exchanges   []core.Exchange
 		wallets     core.WalletStore
+		assetz      core.AssetService
+		posrvs      []core.PortfolioService
 		subscribers core.SubscriberStore
 		client      *mixin.Client
 		system      *core.System
@@ -32,6 +34,8 @@ func New(
 	exchanges []core.Exchange,
 	client *mixin.Client,
 	wallets core.WalletStore,
+	assetz core.AssetService,
+	posrvs []core.PortfolioService,
 	subscribers core.SubscriberStore,
 	system *core.System,
 ) worker.Worker {
@@ -39,6 +43,8 @@ func New(
 		exchanges:   exchanges,
 		client:      client,
 		wallets:     wallets,
+		assetz:      assetz,
+		posrvs:      posrvs,
 		subscribers: subscribers,
 		system:      system,
 		cache:       cache.New(time.Minute*15, time.Minute),
@@ -58,14 +64,9 @@ func (m *Oracle) Run(ctx context.Context) error {
 		return m.loopSubscribers(ctx)
 	})
 
-	return g.Wait()
-}
+	g.Go(func() error {
+		return m.loopTopAssetss(ctx)
+	})
 
-func (m *Oracle) getPrice(ctx context.Context, a *core.Asset) (decimal.Decimal, error) {
-	for _, e := range m.exchanges {
-		if p, err := e.GetPrice(ctx, a); err != nil || p.IsPositive() {
-			return p, err
-		}
-	}
-	return decimal.Zero, nil
+	return g.Wait()
 }

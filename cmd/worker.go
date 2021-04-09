@@ -51,9 +51,11 @@ var workerCmd = &cobra.Command{
 		subscribers := provideSubscriberStore(database)
 		wallets := provideWalletStore(database)
 		walletz := provideWalletService(client)
+		assetz := provideAssetService(client)
 		system := provideSystem()
 
 		var exchanges []core.Exchange
+		var posrvs []core.PortfolioService
 		{
 			m := provideAllExchanges()
 			arr, _ := cmd.Flags().GetStringArray("exchanges")
@@ -62,9 +64,15 @@ var workerCmd = &cobra.Command{
 					exchanges = append(exchanges, e)
 				}
 			}
+
+			for _, e := range m {
+				if p, ok := e.(core.PortfolioService); ok {
+					posrvs = append(posrvs, p)
+				}
+			}
 		}
 		workers := []worker.Worker{
-			oracle.New(exchanges, client, wallets, subscribers, system),
+			oracle.New(exchanges, client, wallets, assetz, posrvs, subscribers, system),
 			cashier.New(wallets, walletz),
 		}
 

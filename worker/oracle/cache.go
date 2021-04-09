@@ -29,7 +29,7 @@ func (m *Oracle) cachedProposal(trace string) *core.Proposal {
 
 func (m *Oracle) cacheAssets(assets ...*core.Asset) error {
 	for _, a := range assets {
-		m.cache.Set(m.assetKey(a.AssetID), a, time.Hour*24)
+		m.cache.Set(m.assetKey(a.AssetID), a, time.Hour)
 	}
 	return nil
 }

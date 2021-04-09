@@ -18,7 +18,7 @@ func (m *Oracle) loopSubscribers(ctx context.Context) error {
 	log := logger.FromContext(ctx).WithField("loop", "subscribers")
 	ctx = logger.WithContext(ctx, log)
 
-	var sleepDur = time.Millisecond
+	var sleepDur = time.Second
 	for {
 		select {
 		case <-ctx.Done():
@@ -32,7 +32,7 @@ func (m *Oracle) loopSubscribers(ctx context.Context) error {
 				break
 			}
 
-			g, ctx := errgroup.WithContext(ctx)
+			var g errgroup.Group
 			for _, s := range subscribers {
 				s := s
 				g.Go(func() error {
