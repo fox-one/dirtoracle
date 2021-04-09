@@ -40,7 +40,7 @@ func (m *Oracle) handleProposalRespMessage(ctx context.Context, msg *mixin.Messa
 	p.Signatures[resp.Index] = resp.Signature
 	if len(p.Signatures) == int(p.Threshold) {
 		// create a final transaction to the receiver
-		if err := m.sendPriceData(ctx, p); err != nil {
+		if err := m.sendPriceData(ctx, msg, p); err != nil {
 			return err
 		}
 	}
@@ -48,12 +48,12 @@ func (m *Oracle) handleProposalRespMessage(ctx context.Context, msg *mixin.Messa
 	return nil
 }
 
-func (m *Oracle) sendPriceData(ctx context.Context, p *core.Proposal) error {
+func (m *Oracle) sendPriceData(ctx context.Context, msg *mixin.MessageView, p *core.Proposal) error {
 	bts, _ := p.Export().MarshalBinary()
 	memo := base64.StdEncoding.EncodeToString(bts)
 	if err := m.wallets.CreateTransfers(ctx, []*core.Transfer{
 		{
-			TraceID:   uuid.MD5(fmt.Sprintf("price_data:trace:%s;", p.PriceRequest.TraceID)),
+			TraceID:   uuid.MD5(fmt.Sprintf("price_data:trace:%s;proposal_message:%s", p.PriceRequest.TraceID, msg.QuoteMessageID)),
 			AssetID:   m.system.GasAsset,
 			Amount:    m.system.GasAmount,
 			Memo:      memo,
