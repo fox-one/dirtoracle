@@ -36,10 +36,15 @@ func (c *eswapEx) getPairs(ctx context.Context) ([]*fswapsdk.Pair, error) {
 				ID    string          `json:"uuid"`
 				Price decimal.Decimal `json:"priceUsdt"`
 			} `json:"asset1"`
-			Balance0  decimal.Decimal `json:"asset0Balance"`
-			Balance1  decimal.Decimal `json:"asset1Balance"`
-			Volume    decimal.Decimal `json:"usdtTradeVolume24hours"`
-			TradeType string          `json:"tradeType"`
+			LPAsset struct {
+				ID    string          `json:"uuid"`
+				Price decimal.Decimal `json:"priceUsdt"`
+			} `json:"lpAsset"`
+			Balance0      decimal.Decimal `json:"asset0Balance"`
+			Balance1      decimal.Decimal `json:"asset1Balance"`
+			LPAssetSupply decimal.Decimal `json:"lpAssetSupply"`
+			Volume        decimal.Decimal `json:"usdtTradeVolume24hours"`
+			TradeType     string          `json:"tradeType"`
 		} `json:"data"`
 	}
 	if err := UnmarshalResponse(resp, &body); err != nil {
@@ -55,15 +60,17 @@ func (c *eswapEx) getPairs(ctx context.Context) ([]*fswapsdk.Pair, error) {
 
 	for i, p := range body.Pairs {
 		pair := &fswapsdk.Pair{
-			RouteID:        int64(i),
-			BaseAssetID:    p.Asset0.ID,
-			BaseAmount:     p.Balance0,
-			QuoteAssetID:   p.Asset1.ID,
-			QuoteAmount:    p.Balance1,
-			FeePercent:     fee,
-			Volume24h:      p.Volume,
-			BaseVolume24h:  p.Volume.Div(p.Asset0.Price),
-			QuoteVolume24h: p.Volume.Div(p.Asset1.Price),
+			RouteID:          int64(i),
+			BaseAssetID:      p.Asset0.ID,
+			BaseAmount:       p.Balance0,
+			QuoteAssetID:     p.Asset1.ID,
+			QuoteAmount:      p.Balance1,
+			LiquidityAssetID: p.LPAsset.ID,
+			Liquidity:        p.LPAssetSupply,
+			FeePercent:       fee,
+			Volume24h:        p.Volume,
+			BaseVolume24h:    p.Volume.Div(p.Asset0.Price),
+			QuoteVolume24h:   p.Volume.Div(p.Asset1.Price),
 		}
 
 		if p.TradeType == "curve" {
