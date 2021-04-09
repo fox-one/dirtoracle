@@ -18,7 +18,7 @@ const (
 )
 
 var (
-	pusdFunds = decimal.New(1, 3)
+	pusdFunds = decimal.New(1, 4)
 )
 
 type (
@@ -37,7 +37,7 @@ func New() core.Exchange {
 	}
 }
 
-func (b *fswapEx) Name() string {
+func (*fswapEx) Name() string {
 	return exchangeName
 }
 

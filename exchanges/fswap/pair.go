@@ -12,27 +12,18 @@ const (
 	pairsKey = "pairs"
 )
 
-func (c *fswapEx) getPairs(ctx context.Context) ([]*fswapsdk.Pair, error) {
-	if pairs, ok := c.cache.Get(pairsKey); ok {
+func (f *fswapEx) getPairs(ctx context.Context) ([]*fswapsdk.Pair, error) {
+	if pairs, ok := f.cache.Get(pairsKey); ok {
 		return pairs.([]*fswapsdk.Pair), nil
 	}
 
 	log := logger.FromContext(ctx)
-	const uri = "/api/pairs"
-	resp, err := fswapsdk.Request(ctx).Get(uri)
+	pairs, err := fswapsdk.ListPairs(ctx)
 	if err != nil {
-		log.WithError(err).Errorln("GET", uri)
+		log.WithError(err).Errorln("GET /pairs")
 		return nil, err
 	}
 
-	var body struct {
-		Pairs []*fswapsdk.Pair `json:"pairs"`
-	}
-	if err := fswapsdk.UnmarshalResponse(resp, &body); err != nil {
-		log.WithError(err).Errorln("getPairs.UnmarshalResponse")
-		return nil, err
-	}
-
-	c.cache.Set(pairsKey, body.Pairs, time.Second*10)
-	return body.Pairs, nil
+	f.cache.Set(pairsKey, pairs, time.Second*10)
+	return pairs, nil
 }
