@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/fox-one/dirtoracle/core"
-	"github.com/fox-one/dirtoracle/exchanges"
 	"github.com/fox-one/pkg/logger"
 	"github.com/patrickmn/go-cache"
 	"github.com/shopspring/decimal"
@@ -17,14 +16,12 @@ const (
 )
 
 type coinbaseEx struct {
-	*exchanges.Exchange
 	cache *cache.Cache
 }
 
 func New() core.Exchange {
 	return &coinbaseEx{
-		Exchange: exchanges.New(),
-		cache:    cache.New(time.Minute, time.Minute),
+		cache: cache.New(time.Minute, time.Minute),
 	}
 }
 
