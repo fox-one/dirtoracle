@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/base64"
 	"encoding/json"
+	"fmt"
 	"time"
 
 	"github.com/fox-one/dirtoracle/core"
@@ -135,7 +136,7 @@ func (m *Oracle) sendProposalRequest(ctx context.Context, p *core.ProposalReques
 	bts, _ := json.MarshalIndent(p, "", "    ")
 	msg := &mixin.MessageRequest{
 		ConversationID: m.system.ConversationID,
-		MessageID:      uuid.New(),
+		MessageID:      uuid.Modify(p.TraceID, fmt.Sprintf("proposal:%d", time.Now().Unix()/30)),
 		Category:       mixin.MessageCategoryPlainPost,
 		Data:           base64.StdEncoding.EncodeToString(bts),
 	}
