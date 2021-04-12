@@ -39,15 +39,11 @@ func DecodeResponse(resp *resty.Response) ([]byte, error) {
 		}
 	}
 
-	var body struct {
-		Error
-
-		Data json.RawMessage `json:"data"`
+	var e Error
+	if err := json.Unmarshal(resp.Body(), &e); err == nil && e.Code > 0 {
+		return nil, &e
 	}
-	if err := json.Unmarshal(resp.Body(), &body); err == nil && body.Code > 0 {
-		return nil, &body.Error
-	}
-	return body.Data, nil
+	return json.RawMessage(resp.Body()), nil
 }
 
 func UnmarshalResponse(resp *resty.Response, v interface{}) error {

@@ -18,7 +18,7 @@ func provideMixinClient() *mixin.Client {
 }
 
 func provideAssetService(c *mixin.Client) core.AssetService {
-	return asset.New(c)
+	return asset.Cache(asset.New(c))
 }
 
 func provideWalletService(c *mixin.Client) core.WalletService {

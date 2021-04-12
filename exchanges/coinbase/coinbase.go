@@ -30,13 +30,6 @@ func (*coinbaseEx) Name() string {
 }
 
 func (c *coinbaseEx) GetPrice(ctx context.Context, a *core.Asset) (decimal.Decimal, error) {
-	// block specific asset price from this exchange,
-	//	since some assets were only be listed on 4swap,
-	//	should avoid same symbol assets
-	if c.IsAssetBlocked(ctx, a) {
-		return decimal.Zero, nil
-	}
-
 	pairSymbol := c.pairSymbol(c.assetSymbol(a.Symbol))
 	log := logger.FromContext(ctx).WithFields(logrus.Fields{
 		"exchange": c.Name(),
@@ -49,12 +42,7 @@ func (c *coinbaseEx) GetPrice(ctx context.Context, a *core.Asset) (decimal.Decim
 		return decimal.Zero, err
 	}
 
-	ticker, err := c.getTicker(ctx, pairSymbol)
-	if err != nil {
-		return decimal.Zero, err
-	}
-
-	return ticker.Price, nil
+	return c.getPrice(ctx, pairSymbol)
 }
 
 func (*coinbaseEx) assetSymbol(symbol string) string {

@@ -2,14 +2,9 @@ package binance
 
 import (
 	"context"
-	"time"
 
 	"github.com/fox-one/pkg/logger"
 	"github.com/shopspring/decimal"
-)
-
-const (
-	pricesKey = "prices"
 )
 
 type (
@@ -20,10 +15,6 @@ type (
 )
 
 func (b *binanceEx) getPrices(ctx context.Context) ([]*Price, error) {
-	if prices, ok := b.cache.Get(pricesKey); ok {
-		return prices.([]*Price), nil
-	}
-
 	log := logger.FromContext(ctx)
 	resp, err := Request(ctx).Get("/ticker/price")
 	if err != nil {
@@ -37,6 +28,28 @@ func (b *binanceEx) getPrices(ctx context.Context) ([]*Price, error) {
 		return nil, err
 	}
 
-	b.cache.Set(pricesKey, prices, time.Second*10)
 	return prices, nil
+}
+
+func (b *binanceEx) getPrice(ctx context.Context, symbol string) (decimal.Decimal, error) {
+	log := logger.FromContext(ctx)
+	resp, err := Request(ctx).SetQueryParam("symbol", symbol).Get("/ticker/bookTicker")
+	if err != nil {
+		log.WithError(err).Errorln("GET /ticker/price")
+		return decimal.Zero, err
+	}
+
+	var ticker struct {
+		Symbol   string          `json:"symbol"`
+		BidPrice decimal.Decimal `json:"bidPrice"`
+		BidQty   decimal.Decimal `json:"bidQty"`
+		AskPrice decimal.Decimal `json:"askPrice"`
+		AskQty   decimal.Decimal `json:"askQty"`
+	}
+	if err := UnmarshalResponse(resp, &ticker); err != nil {
+		log.WithError(err).Errorln("getPrices.UnmarshalResponse")
+		return decimal.Zero, err
+	}
+
+	return ticker.BidPrice, nil
 }
