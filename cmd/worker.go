@@ -18,8 +18,12 @@ package cmd
 import (
 	"fmt"
 	"net/http"
+	"time"
 
 	"github.com/fox-one/dirtoracle/core"
+	"github.com/fox-one/dirtoracle/exchanges"
+	"github.com/fox-one/dirtoracle/exchanges/bwatch"
+	"github.com/fox-one/dirtoracle/exchanges/fswap"
 	"github.com/fox-one/dirtoracle/handler/hc"
 	"github.com/fox-one/dirtoracle/worker"
 	"github.com/fox-one/dirtoracle/worker/cashier"
@@ -51,31 +55,31 @@ var workerCmd = &cobra.Command{
 		subscribers := provideSubscriberStore(database)
 		wallets := provideWalletStore(database)
 		walletz := provideWalletService(client)
-		assetz := provideAssetService(client)
 		system := provideSystem()
 
-		var exchanges []core.Exchange
-		var posrvs = []core.PortfolioService{
-			provideBwatchService(),
-		}
-
+		var ex core.Exchange
 		{
 			m := provideAllExchanges()
 			arr, _ := cmd.Flags().GetStringArray("exchanges")
 			for _, n := range arr {
 				if e, ok := m[n]; ok {
-					exchanges = append(exchanges, e)
+					if ex == nil {
+						ex = e
+					} else {
+						ex = exchanges.Chain(ex, e)
+					}
 				}
 			}
 
-			for _, e := range m {
-				if p, ok := e.(core.PortfolioService); ok {
-					posrvs = append(posrvs, p)
-				}
-			}
+			ex = exchanges.Cache(ex, time.Minute)
+			assetz := provideAssetService(client)
+			ex = bwatch.New(ex, assetz)
+			ex = fswap.Lp(ex, assetz)
+			ex = exchanges.Cache(ex, time.Minute)
 		}
+
 		workers := []worker.Worker{
-			oracle.New(exchanges, client, wallets, assetz, posrvs, subscribers, system),
+			oracle.New(ex, client, wallets, subscribers, system),
 			cashier.New(wallets, walletz),
 		}
 

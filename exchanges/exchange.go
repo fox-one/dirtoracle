@@ -80,7 +80,7 @@ func (c *cacheEx) GetPrice(ctx context.Context, asset *core.Asset) (decimal.Deci
 			return p, nil
 		}
 
-		price, err := c.GetPrice(ctx, asset)
+		price, err := c.Exchange.GetPrice(ctx, asset)
 		if err != nil {
 			return decimal.Zero, err
 		}

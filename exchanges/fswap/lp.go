@@ -2,35 +2,86 @@ package fswap
 
 import (
 	"context"
+	"time"
 
+	fswapsdk "github.com/fox-one/4swap-sdk-go"
 	"github.com/fox-one/dirtoracle/core"
+	"github.com/patrickmn/go-cache"
+	"github.com/shopspring/decimal"
 )
 
-func (f *fswapEx) ListPortfolioTokens(ctx context.Context) ([]*core.PortfolioToken, error) {
-	pairs, err := f.getPairs(ctx)
+const (
+	lpExchangeName = "4swap-lp"
+)
+
+type (
+	lpEx struct {
+		fswapEx
+		core.Exchange
+		assets core.AssetService
+	}
+)
+
+func Lp(ex core.Exchange, assets core.AssetService) core.Exchange {
+	return &lpEx{
+		fswapEx: fswapEx{
+			cache: cache.New(time.Minute, time.Minute),
+		},
+		Exchange: ex,
+		assets:   assets,
+	}
+}
+
+func (*lpEx) Name() string {
+	return lpExchangeName
+}
+
+func (lp *lpEx) findLP(ctx context.Context, a *core.Asset) (*fswapsdk.Pair, error) {
+	pairs, err := lp.getPairs(ctx)
 	if err != nil {
 		return nil, err
 	}
-
-	var tokens []*core.PortfolioToken
 	for _, pair := range pairs {
-		if pair.Liquidity.IsZero() {
-			continue
+		if pair.LiquidityAssetID == a.AssetID {
+			return pair, nil
 		}
-		tokens = append(tokens, &core.PortfolioToken{
-			AssetID: pair.LiquidityAssetID,
-			Items: []*core.PortfolioItem{
-				{
-					AssetID: pair.BaseAssetID,
-					Amount:  pair.BaseAmount.DivRound(pair.Liquidity, 8),
-				},
-				{
-					AssetID: pair.QuoteAssetID,
-					Amount:  pair.QuoteAmount.DivRound(pair.Liquidity, 8),
-				},
-			},
-		})
+	}
+	return nil, nil
+}
+func (lp *lpEx) GetPrice(ctx context.Context, a *core.Asset) (decimal.Decimal, error) {
+	pair, err := lp.findLP(ctx, a)
+	if err != nil {
+		return decimal.Zero, err
 	}
 
-	return tokens, nil
+	if pair == nil {
+		return lp.Exchange.GetPrice(ctx, a)
+	}
+
+	if pair.Liquidity.IsZero() {
+		return decimal.Zero, nil
+	}
+
+	var assets = []struct {
+		AssetID string
+		Amount  decimal.Decimal
+	}{
+		{AssetID: pair.BaseAssetID, Amount: pair.BaseAmount.Div(pair.Liquidity)},
+		{AssetID: pair.QuoteAssetID, Amount: pair.QuoteAmount.Div(pair.Liquidity)},
+	}
+
+	value := decimal.Zero
+	for _, item := range assets {
+		a, err := lp.assets.ReadAsset(ctx, item.AssetID)
+		if err != nil {
+			return decimal.Zero, err
+		}
+		p, err := lp.Exchange.GetPrice(ctx, a)
+		if err != nil || p.IsZero() {
+			return decimal.Zero, err
+		}
+		value = value.Add(p.Mul(item.Amount))
+	}
+
+	return value.Truncate(12), nil
 }

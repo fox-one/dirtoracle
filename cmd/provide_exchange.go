@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"github.com/fox-one/dirtoracle/core"
+	"github.com/fox-one/dirtoracle/exchanges"
 	"github.com/fox-one/dirtoracle/exchanges/binance"
 	"github.com/fox-one/dirtoracle/exchanges/bitfinex"
 	"github.com/fox-one/dirtoracle/exchanges/bitstamp"
@@ -13,14 +14,17 @@ import (
 )
 
 func provideAllExchanges() map[string]core.Exchange {
+	block := exchanges.Block("XIN", "BOX")
+	binance := block(provideBinanceExchanges())
+	coinbase := block(provideCoinbaseExchanges())
+	bitstamp := block(provideBitstampExchanges())
+	bittrex := block(provideBittrexExchanges())
+	bitfinex := block(provideBitfinexExchanges())
+	huobi := block(provideHuobixchanges())
+
 	fswap := provideFswapExchanges()
 	eswap := provideExinswapExchanges()
-	binance := provideBinanceExchanges()
-	coinbase := provideCoinbaseExchanges()
-	bitstamp := provideBitstampExchanges()
-	bittrex := provideBittrexExchanges()
-	bitfinex := provideBitfinexExchanges()
-	huobi := provideHuobixchanges()
+
 	return map[string]core.Exchange{
 		fswap.Name():    fswap,
 		eswap.Name():    eswap,
