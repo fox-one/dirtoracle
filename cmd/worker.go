@@ -59,7 +59,8 @@ var workerCmd = &cobra.Command{
 
 		var ex core.Exchange
 		{
-			m := provideAllExchanges()
+			assetz := provideAssetService(client)
+			m := provideAllExchanges(assetz)
 			arr, _ := cmd.Flags().GetStringArray("exchanges")
 			for _, n := range arr {
 				if e, ok := m[n]; ok {
@@ -72,9 +73,8 @@ var workerCmd = &cobra.Command{
 			}
 
 			ex = exchanges.Cache(ex, time.Minute)
-			assetz := provideAssetService(client)
-			ex = bwatch.New(ex, assetz)
-			ex = fswap.Lp(ex, assetz)
+			ex = bwatch.New(ex)
+			ex = fswap.Lp(ex)
 			ex = exchanges.Cache(ex, time.Minute)
 		}
 

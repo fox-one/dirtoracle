@@ -18,17 +18,15 @@ type (
 	lpEx struct {
 		fswapEx
 		core.Exchange
-		assets core.AssetService
 	}
 )
 
-func Lp(ex core.Exchange, assets core.AssetService) core.Exchange {
+func Lp(ex core.Exchange) core.Exchange {
 	return &lpEx{
 		fswapEx: fswapEx{
 			cache: cache.New(time.Minute, time.Minute),
 		},
 		Exchange: ex,
-		assets:   assets,
 	}
 }
 
@@ -72,11 +70,7 @@ func (lp *lpEx) GetPrice(ctx context.Context, a *core.Asset) (decimal.Decimal, e
 
 	value := decimal.Zero
 	for _, item := range assets {
-		a, err := lp.assets.ReadAsset(ctx, item.AssetID)
-		if err != nil {
-			return decimal.Zero, err
-		}
-		p, err := lp.Exchange.GetPrice(ctx, a)
+		p, err := lp.Exchange.GetPrice(ctx, &core.Asset{AssetID: item.AssetID})
 		if err != nil || p.IsZero() {
 			return decimal.Zero, err
 		}

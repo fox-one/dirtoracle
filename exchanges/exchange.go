@@ -95,3 +95,30 @@ func (c *cacheEx) GetPrice(ctx context.Context, asset *core.Asset) (decimal.Deci
 
 	return v.(decimal.Decimal), nil
 }
+
+func FillSymbol(ex core.Exchange, assets core.AssetService) core.Exchange {
+	return &assetEx{
+		Exchange: ex,
+		assets:   assets,
+	}
+}
+
+type assetEx struct {
+	core.Exchange
+	assets core.AssetService
+}
+
+func (a *assetEx) GetPrice(ctx context.Context, asset *core.Asset) (decimal.Decimal, error) {
+	if asset.Symbol == "" {
+		a, err := a.assets.ReadAsset(ctx, asset.AssetID)
+		if err != nil {
+			if err == core.ErrAssetNotExist {
+				return decimal.Zero, nil
+			}
+			return decimal.Zero, err
+		}
+		asset.Symbol = a.Symbol
+	}
+
+	return a.Exchange.GetPrice(ctx, asset)
+}

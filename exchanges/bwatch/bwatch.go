@@ -15,14 +15,12 @@ const (
 
 type bwatchService struct {
 	core.Exchange
-	cache  *cache.Cache
-	assets core.AssetService
+	cache *cache.Cache
 }
 
-func New(ex core.Exchange, assets core.AssetService) core.Exchange {
+func New(ex core.Exchange) core.Exchange {
 	return &bwatchService{
 		Exchange: ex,
-		assets:   assets,
 		cache:    cache.New(time.Hour, time.Minute),
 	}
 }
@@ -43,11 +41,7 @@ func (b *bwatchService) GetPrice(ctx context.Context, a *core.Asset) (decimal.De
 
 	value := decimal.Zero
 	for id, v := range etf.Assets {
-		a, err := b.assets.ReadAsset(ctx, id)
-		if err != nil {
-			return decimal.Zero, err
-		}
-		p, err := b.Exchange.GetPrice(ctx, a)
+		p, err := b.Exchange.GetPrice(ctx, &core.Asset{AssetID: id})
 		if err != nil {
 			return decimal.Zero, err
 		}

@@ -13,14 +13,14 @@ import (
 	"github.com/fox-one/dirtoracle/exchanges/huobi"
 )
 
-func provideAllExchanges() map[string]core.Exchange {
+func provideAllExchanges(assets core.AssetService) map[string]core.Exchange {
 	block := exchanges.Block("XIN", "BOX")
-	binance := block(provideBinanceExchanges())
-	coinbase := block(provideCoinbaseExchanges())
-	bitstamp := block(provideBitstampExchanges())
-	bittrex := block(provideBittrexExchanges())
-	bitfinex := block(provideBitfinexExchanges())
-	huobi := block(provideHuobixchanges())
+	binance := block(exchanges.FillSymbol(provideBinanceExchanges(), assets))
+	coinbase := block(exchanges.FillSymbol(provideCoinbaseExchanges(), assets))
+	bitstamp := block(exchanges.FillSymbol(provideBitstampExchanges(), assets))
+	bittrex := block(exchanges.FillSymbol(provideBittrexExchanges(), assets))
+	bitfinex := block(exchanges.FillSymbol(provideBitfinexExchanges(), assets))
+	huobi := block(exchanges.FillSymbol(provideHuobixchanges(), assets))
 
 	fswap := provideFswapExchanges()
 	eswap := provideExinswapExchanges()
