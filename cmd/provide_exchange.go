@@ -14,7 +14,7 @@ import (
 )
 
 func provideAllExchanges(assets core.AssetService) map[string]core.Exchange {
-	block := exchanges.Block("XIN", "BOX")
+	block := exchanges.Block("f5ef6b5d-cc5a-3d90-b2c0-a2fd386e7a3c", "c94ac88f-4671-3976-b60a-09064f1811e8")
 	binance := block(exchanges.FillSymbol(provideBinanceExchanges(), assets))
 	coinbase := block(exchanges.FillSymbol(provideCoinbaseExchanges(), assets))
 	bitstamp := block(exchanges.FillSymbol(provideBitstampExchanges(), assets))
