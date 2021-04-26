@@ -35,7 +35,6 @@ type (
 		// 节点用于签名的私钥
 		SignKey        *blst.PrivateKey `json:"sign_key"`
 		ConversationID string           `json:"conversation_id"`
-		Threshold      uint8            `json:"threshold"`
 	}
 )
 
