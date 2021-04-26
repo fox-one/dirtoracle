@@ -9,7 +9,7 @@ import (
 	"github.com/go-resty/resty/v2"
 )
 
-const bwatchHost = "https://bwatch-test-api.fox.one"
+const bwatchHost = "https://f1-bwatch-api.firesbox.com"
 
 var client = resty.New().SetHostURL(bwatchHost)
 

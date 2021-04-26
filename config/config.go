@@ -12,8 +12,8 @@ type (
 		DB     db.Config `json:"db"`
 		Bwatch Bwatch    `json:"bwatch"`
 		Dapp   Dapp      `json:"dapp"`
-		Group  Group     `json:"group,omitempty"`
-		Gas    Gas       `json:"gas,omitempty"`
+		Group  Group     `json:"group"`
+		Gas    Gas       `json:"gas"`
 	}
 
 	Dapp struct {
@@ -27,15 +27,15 @@ type (
 	}
 
 	Gas struct {
-		Asset  string          `json:"asset,omitempty"`
-		Amount decimal.Decimal `json:"amount,omitempty"`
+		Asset  string          `json:"asset"`
+		Amount decimal.Decimal `json:"amount"`
 	}
 
 	Group struct {
 		// 节点用于签名的私钥
-		SignKey        *blst.PrivateKey `json:"sign_key,omitempty"`
-		ConversationID string           `json:"conversation_id,omitempty"`
-		Threshold      uint8            `json:"threshold,omitempty"`
+		SignKey        *blst.PrivateKey `json:"sign_key"`
+		ConversationID string           `json:"conversation_id"`
+		Threshold      uint8            `json:"threshold"`
 	}
 )
 
