@@ -2,14 +2,10 @@ package bittrex
 
 import (
 	"context"
-	"time"
+	"fmt"
 
 	"github.com/fox-one/pkg/logger"
 	"github.com/shopspring/decimal"
-)
-
-const (
-	tickersKey = "tickers"
 )
 
 type (
@@ -22,10 +18,6 @@ type (
 )
 
 func (b *bittrexEx) getTickers(ctx context.Context) ([]*Ticker, error) {
-	if tickers, ok := b.cache.Get(tickersKey); ok {
-		return tickers.([]*Ticker), nil
-	}
-
 	log := logger.FromContext(ctx)
 	uri := "/markets/tickers"
 	resp, err := Request(ctx).Get(uri)
@@ -40,6 +32,23 @@ func (b *bittrexEx) getTickers(ctx context.Context) ([]*Ticker, error) {
 		return nil, err
 	}
 
-	b.cache.Set(tickersKey, tickers, time.Second*10)
 	return tickers, nil
+}
+
+func (b *bittrexEx) getPrice(ctx context.Context, symbol string) (decimal.Decimal, error) {
+	log := logger.FromContext(ctx)
+	uri := fmt.Sprintf("/markets/%s/ticker", symbol)
+	resp, err := Request(ctx).Get(uri)
+	if err != nil {
+		log.WithError(err).Errorln("GET", uri)
+		return decimal.Zero, err
+	}
+
+	var ticker Ticker
+	if err := UnmarshalResponse(resp, &ticker); err != nil {
+		log.WithError(err).Errorln("getTicker.UnmarshalResponse")
+		return decimal.Zero, err
+	}
+
+	return ticker.BidRate, nil
 }

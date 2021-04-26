@@ -40,6 +40,10 @@ func handle(cfg *config.Config) http.HandlerFunc {
 			{AssetID: "9b180ab6-6abe-3dc0-a13f-04169eb34bfa"},
 			{AssetID: "4d8c508b-91c5-375b-92b0-ee702ed2dac5"},
 			{AssetID: "b34633de-4012-38e3-88a9-1f41eafdf45a"},
+			{AssetID: "eea900a8-b327-488c-8d8d-1428702fe240"},
+			{AssetID: "76c802a2-7c88-447f-a93e-c29c9e5dd9c8"},
+			{AssetID: "54c61a72-b982-4034-a556-0d99e3c21e39"},
+			{AssetID: "a31e847e-ca87-3162-b4d1-322bc552e831"},
 		} {
 			requests = append(requests, &core.PriceRequest{
 				TraceID: uuid.Modify(asset.AssetID, fmt.Sprintf("price-request:%s:%d", cfg.Dapp.ClientID, time.Now().Unix()/60)),

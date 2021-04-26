@@ -39,14 +39,16 @@ func (b *huobiEx) getPairs(ctx context.Context) ([]*Pair, error) {
 		return nil, err
 	}
 
-	var pairs []*Pair
-	if err := UnmarshalResponse(resp, &pairs); err != nil {
+	var body struct {
+		Pairs []*Pair `json:"data"`
+	}
+	if err := UnmarshalResponse(resp, &body); err != nil {
 		log.WithError(err).Errorln("getPairs.UnmarshalResponse")
 		return nil, err
 	}
 
-	b.cache.Set(pairsKey, pairs, time.Minute*10)
-	return pairs, nil
+	b.cache.Set(pairsKey, body.Pairs, time.Minute*10)
+	return body.Pairs, nil
 }
 
 func (b *huobiEx) supported(ctx context.Context, symbol string) (bool, error) {

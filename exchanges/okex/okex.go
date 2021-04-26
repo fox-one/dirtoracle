@@ -1,4 +1,4 @@
-package coinbase
+package okex
 
 import (
 	"context"
@@ -12,43 +12,43 @@ import (
 )
 
 const (
-	exchangeName = "coinbase"
+	exchangeName = "okex"
 )
 
-type coinbaseEx struct {
+type okexEx struct {
 	cache *cache.Cache
 }
 
 func New() core.Exchange {
-	return &coinbaseEx{
+	return &okexEx{
 		cache: cache.New(time.Minute, time.Minute),
 	}
 }
 
-func (*coinbaseEx) Name() string {
+func (*okexEx) Name() string {
 	return exchangeName
 }
 
-func (c *coinbaseEx) GetPrice(ctx context.Context, a *core.Asset) (decimal.Decimal, error) {
-	pairSymbol := c.pairSymbol(c.assetSymbol(a.Symbol))
+func (b *okexEx) GetPrice(ctx context.Context, a *core.Asset) (decimal.Decimal, error) {
+	pairSymbol := b.pairSymbol(b.assetSymbol(a.Symbol))
 	log := logger.FromContext(ctx).WithFields(logrus.Fields{
-		"exchange": c.Name(),
+		"exchange": b.Name(),
 		"symbol":   a.Symbol,
 		"pair":     pairSymbol,
 	})
 	ctx = logger.WithContext(ctx, log)
 
-	if ok, err := c.supported(ctx, pairSymbol); err != nil || !ok {
+	if ok, err := b.supported(ctx, pairSymbol); err != nil || !ok {
 		return decimal.Zero, err
 	}
 
-	return c.getPrice(ctx, pairSymbol)
+	return b.getPrice(ctx, pairSymbol)
 }
 
-func (*coinbaseEx) assetSymbol(symbol string) string {
+func (b *okexEx) assetSymbol(symbol string) string {
 	return symbol
 }
 
-func (*coinbaseEx) pairSymbol(symbol string) string {
-	return symbol + "-USD"
+func (b *okexEx) pairSymbol(symbol string) string {
+	return symbol + "-USDK"
 }

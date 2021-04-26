@@ -1,4 +1,4 @@
-package huobi
+package okex
 
 import (
 	"context"
@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	Endpoint = "https://api.huobi.pro/"
+	Endpoint = "https://aws.okex.com/api"
 )
 
 var httpClient = resty.New().
@@ -20,7 +20,7 @@ var httpClient = resty.New().
 
 type Error struct {
 	Code int    `json:"code,omitempty"`
-	Msg  string `json:"message,omitempty"`
+	Msg  string `json:"msg,omitempty"`
 }
 
 func (err *Error) Error() string {
@@ -39,11 +39,14 @@ func DecodeResponse(resp *resty.Response) ([]byte, error) {
 		}
 	}
 
-	var e Error
-	if err := json.Unmarshal(resp.Body(), &e); err == nil && e.Code > 0 {
-		return nil, &e
+	var body struct {
+		Error
+		Body json.RawMessage `json:"data"`
 	}
-	return json.RawMessage(resp.Body()), nil
+	if err := json.Unmarshal(resp.Body(), &body); err == nil && body.Code > 0 {
+		return nil, &body.Error
+	}
+	return body.Body, nil
 }
 
 func UnmarshalResponse(resp *resty.Response, v interface{}) error {

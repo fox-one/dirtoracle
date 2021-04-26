@@ -19,10 +19,8 @@ var (
 
 type (
 	Oracle struct {
-		exchanges   []core.Exchange
+		exchange    core.Exchange
 		wallets     core.WalletStore
-		assetz      core.AssetService
-		posrvs      []core.PortfolioService
 		subscribers core.SubscriberStore
 		client      *mixin.Client
 		system      *core.System
@@ -31,20 +29,16 @@ type (
 )
 
 func New(
-	exchanges []core.Exchange,
+	exchange core.Exchange,
 	client *mixin.Client,
 	wallets core.WalletStore,
-	assetz core.AssetService,
-	posrvs []core.PortfolioService,
 	subscribers core.SubscriberStore,
 	system *core.System,
 ) worker.Worker {
 	m := &Oracle{
-		exchanges:   exchanges,
+		exchange:    exchange,
 		client:      client,
 		wallets:     wallets,
-		assetz:      assetz,
-		posrvs:      posrvs,
 		subscribers: subscribers,
 		system:      system,
 		cache:       cache.New(time.Minute*15, time.Minute),
@@ -62,14 +56,6 @@ func (m *Oracle) Run(ctx context.Context) error {
 
 	g.Go(func() error {
 		return m.loopSubscribers(ctx)
-	})
-
-	g.Go(func() error {
-		return m.loopTopAssets(ctx)
-	})
-
-	g.Go(func() error {
-		return m.loopPortfolioTokens(ctx)
 	})
 
 	return g.Wait()

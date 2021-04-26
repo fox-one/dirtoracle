@@ -12,7 +12,7 @@ require (
 	github.com/gin-gonic/gin v1.7.1 // indirect
 	github.com/go-chi/chi v4.1.2+incompatible
 	github.com/go-playground/validator/v10 v10.5.0 // indirect
-	github.com/go-resty/resty/v2 v2.5.0
+	github.com/go-resty/resty/v2 v2.6.0
 	github.com/go-sql-driver/mysql v1.6.0 // indirect
 	github.com/go-yaml/yaml v2.1.0+incompatible
 	github.com/gofrs/uuid v4.0.0+incompatible
@@ -37,10 +37,9 @@ require (
 	github.com/ugorji/go v1.2.5 // indirect
 	github.com/vmihailenco/msgpack/v5 v5.3.1 // indirect
 	github.com/yiplee/structs v1.0.3
-	golang.org/x/crypto v0.0.0-20210322153248-0c34fe9e7dc2 // indirect
-	golang.org/x/net v0.0.0-20210405180319-a5a99cb37ef4 // indirect
+	golang.org/x/crypto v0.0.0-20210415154028-4f45737414dc // indirect
+	golang.org/x/net v0.0.0-20210420210106-798c2154c571 // indirect
 	golang.org/x/sync v0.0.0-20210220032951-036812b2e83c
-	golang.org/x/sys v0.0.0-20210403161142-5e06dd20ab57 // indirect
-	golang.org/x/text v0.3.6 // indirect
+	golang.org/x/sys v0.0.0-20210420205809-ac73e9fd8988 // indirect
 	gopkg.in/ini.v1 v1.62.0 // indirect
 )

@@ -3,14 +3,9 @@ package bitstamp
 import (
 	"context"
 	"fmt"
-	"time"
 
 	"github.com/fox-one/pkg/logger"
 	"github.com/shopspring/decimal"
-)
-
-const (
-	tickerKey = "ticker_%s"
 )
 
 type (
@@ -28,11 +23,6 @@ type (
 )
 
 func (b *bitstampEx) getTicker(ctx context.Context, symbol string) (*Ticker, error) {
-	cacheKey := fmt.Sprintf(tickerKey, symbol)
-	if ticker, ok := b.cache.Get(cacheKey); ok {
-		return ticker.(*Ticker), nil
-	}
-
 	log := logger.FromContext(ctx)
 	uri := fmt.Sprintf("/ticker/%s", symbol)
 	resp, err := Request(ctx).Get(uri)
@@ -47,6 +37,5 @@ func (b *bitstampEx) getTicker(ctx context.Context, symbol string) (*Ticker, err
 		return nil, err
 	}
 
-	b.cache.Set(cacheKey, &ticker, time.Second*10)
 	return &ticker, nil
 }

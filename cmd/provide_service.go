@@ -3,7 +3,6 @@ package cmd
 import (
 	"github.com/fox-one/dirtoracle/core"
 	"github.com/fox-one/dirtoracle/service/asset"
-	"github.com/fox-one/dirtoracle/service/bwatch"
 	"github.com/fox-one/dirtoracle/service/wallet"
 	"github.com/fox-one/mixin-sdk-go"
 )
@@ -18,15 +17,11 @@ func provideMixinClient() *mixin.Client {
 }
 
 func provideAssetService(c *mixin.Client) core.AssetService {
-	return asset.New(c)
+	return asset.Cache(asset.New(c))
 }
 
 func provideWalletService(c *mixin.Client) core.WalletService {
 	return wallet.New(c, cfg.Dapp.Pin)
-}
-
-func provideBwatchService() core.PortfolioService {
-	return bwatch.New(bwatch.Config{ApiHost: cfg.Bwatch.ApiBase})
 }
 
 func provideSystem() *core.System {

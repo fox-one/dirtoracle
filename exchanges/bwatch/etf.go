@@ -1,8 +1,15 @@
 package bwatch
 
 import (
+	"context"
+
+	"github.com/fox-one/dirtoracle/core"
 	"github.com/fox-one/dirtoracle/pkg/number"
 	"github.com/shopspring/decimal"
+)
+
+const (
+	etfsKey = "etfs"
 )
 
 type (
@@ -25,3 +32,37 @@ type (
 		Assets                number.Values   `json:"assets"`
 	}
 )
+
+func (b *bwatchService) getETFs(ctx context.Context) ([]*Etf, error) {
+	if v, ok := b.cache.Get(etfsKey); ok {
+		return v.([]*Etf), nil
+	}
+
+	r, err := request(ctx).Get("/api/etfs")
+	if err != nil {
+		return nil, err
+	}
+
+	var body struct {
+		Etfs []*Etf `json:"etfs"`
+	}
+	if err = decodeResponse(r, &body); err != nil {
+		return nil, err
+	}
+
+	b.cache.SetDefault(etfsKey, body.Etfs)
+	return body.Etfs, nil
+}
+
+func (b *bwatchService) getETF(ctx context.Context, a *core.Asset) (*Etf, error) {
+	etfs, err := b.getETFs(ctx)
+	if err != nil {
+		return nil, err
+	}
+	for _, etf := range etfs {
+		if etf.AssetID == a.AssetID {
+			return etf, nil
+		}
+	}
+	return nil, nil
+}
