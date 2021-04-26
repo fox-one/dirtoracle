@@ -1,0 +1,26 @@
+db:
+  dialect: "mysql"
+  host: "127.0.0.1"
+  port: 3306
+  user: "xxx"
+  password: "xxxxxx"
+  database: "dirtoracle"
+
+dapp:
+  pin: ""
+  client_id: ""
+  session_id: ""
+  pin_token: ""
+  private_key: ""
+
+group:
+  conversation_id: ""
+  sign_key: "xxx__blst_private_key__xx"
+
+bwatch:
+  api_base: "https://f1-bwatch-api.firesbox.com"
+
+gas:
+  amount: "1"
+  asset: "965e5c6e-434c-3fa9-b780-c50f43cd955c"
+

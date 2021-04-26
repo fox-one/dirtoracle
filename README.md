@@ -2,6 +2,8 @@
 
 MTG DIRT Oracle, feed real life data to the MTG Network.
 
+View [Deploy Doc in zh-CN](how_to_deploy.md)
+
 ## How it works
 
 All Oracle Nodes will be added to a Mixin Group Chat, consensus will be reached via chat messages.
