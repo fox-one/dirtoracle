@@ -23,6 +23,6 @@ jobs:
         uses: VaultVulp/gp-docker-action@1.1.8
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
-          image-name: worker
+          image-name: dirtoracle
           dockerfile: docker/Dockerfile
           image-tag: ${{ steps.imagetag.outputs.tag }}
