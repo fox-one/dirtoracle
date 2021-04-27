@@ -68,9 +68,6 @@ func (c *eswapEx) getPairs(ctx context.Context) ([]*fswapsdk.Pair, error) {
 			LiquidityAssetID: p.LPAsset.ID,
 			Liquidity:        p.LPAssetSupply,
 			FeePercent:       fee,
-			Volume24h:        p.Volume,
-			BaseVolume24h:    p.Volume.Div(p.Asset0.Price),
-			QuoteVolume24h:   p.Volume.Div(p.Asset1.Price),
 		}
 
 		if p.TradeType == "curve" {
