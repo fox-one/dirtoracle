@@ -10,6 +10,7 @@ import (
 	"github.com/fox-one/mixin-sdk-go"
 	"github.com/fox-one/pkg/logger"
 	"github.com/fox-one/pkg/uuid"
+	"github.com/sirupsen/logrus"
 )
 
 func (m *Oracle) handleProposalRespMessage(ctx context.Context, msg *mixin.MessageView) error {
@@ -64,6 +65,9 @@ func (m *Oracle) sendPriceData(ctx context.Context, msg *mixin.MessageView, p *c
 		logger.FromContext(ctx).WithError(err).Errorln("CreateTransfers failed")
 		return err
 	}
-	logger.FromContext(ctx).Infoln("PriceData sent")
+	logger.FromContext(ctx).WithFields(logrus.Fields{
+		"asset": p.ProposalRequest.Asset.Symbol,
+		"price": p.Price,
+	}).Infoln("PriceData sent")
 	return nil
 }
