@@ -2,57 +2,20 @@ package bittrex
 
 import (
 	"context"
+	"encoding/json"
+	"io/ioutil"
 	"testing"
 
 	"github.com/fox-one/dirtoracle/core"
 	"github.com/stretchr/testify/require"
 )
 
-var assets = []*core.Asset{
-	{
-		Symbol:  "BTC",
-		AssetID: "c6d0c728-2624-429b-8e0d-d9d19b6592fa",
-	},
-	{
-		Symbol:  "ETH",
-		AssetID: "43d61dcd-e413-450d-80b8-101d5e903357",
-	},
-	{
-		Symbol:  "EOS",
-		AssetID: "6cfe566e-4aad-470b-8c9a-2fd35b49c68d",
-	},
-	{
-		Symbol:  "DOGE",
-		AssetID: "6770a1e5-6086-44d5-b60f-545f9d9e8ffd",
-	},
-	{
-		Symbol:  "ZEC",
-		AssetID: "c996abc9-d94e-4494-b1cf-2a3fd3ac5714",
-	},
-	{
-		Symbol:  "DOT",
-		AssetID: "54c61a72-b982-4034-a556-0d99e3c21e39",
-	},
-	{
-		Symbol:  "LTC",
-		AssetID: "76c802a2-7c88-447f-a93e-c29c9e5dd9c8",
-	},
-	{
-		Symbol:  "SC",
-		AssetID: "990c4c29-57e9-48f6-9819-7d986ea44985",
-	},
-	{
-		Symbol:  "ZEN",
-		AssetID: "a2c5d22b-62a2-4c13-b3f0-013290dbac60",
-	},
-	{
-		Symbol:  "BCH",
-		AssetID: "fd11b6e3-0b87-41f1-a41f-f0e9b49e5bf0",
-	},
-	{
-		Symbol:  "FIL",
-		AssetID: "08285081-e1d8-4be6-9edc-e203afa932da",
-	},
+var assets []*core.Asset
+
+func init() {
+	if bts, err := ioutil.ReadFile("../testdata/assets.json"); err == nil {
+		json.Unmarshal(bts, &assets)
+	}
 }
 
 func TestGetPrice(t *testing.T) {
@@ -68,7 +31,6 @@ func TestGetPrice(t *testing.T) {
 			t.Log(a.Symbol, "price:", p)
 			require.True(t, p.IsPositive(), a.Symbol+" price not positive")
 		})
-
 	}
 
 	{

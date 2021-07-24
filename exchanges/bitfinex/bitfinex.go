@@ -41,5 +41,12 @@ func (b *bitfinexEx) assetSymbol(symbol string) string {
 }
 
 func (b *bitfinexEx) pairSymbol(symbol string) string {
-	return fmt.Sprintf("t%sUSD", symbol)
+	switch symbol {
+	case "BCH":
+		return "tBCHN:USD"
+	case "DOGE":
+		return "tDOGE:USD"
+	default:
+		return fmt.Sprintf("t%sUSD", symbol)
+	}
 }
