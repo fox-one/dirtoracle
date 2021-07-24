@@ -17,7 +17,7 @@ const (
 )
 
 var (
-	pusdFunds = decimal.New(1, 3)
+	pusdFunds = decimal.New(1, 2)
 )
 
 type (
