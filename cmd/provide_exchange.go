@@ -10,6 +10,7 @@ import (
 	"github.com/fox-one/dirtoracle/exchanges/coinbase"
 	"github.com/fox-one/dirtoracle/exchanges/exinswap"
 	"github.com/fox-one/dirtoracle/exchanges/fswap"
+	"github.com/fox-one/dirtoracle/exchanges/ftx"
 	"github.com/fox-one/dirtoracle/exchanges/huobi"
 	"github.com/fox-one/dirtoracle/exchanges/okex"
 )
@@ -23,6 +24,7 @@ func provideAllExchanges(assets core.AssetService) map[string]core.Exchange {
 	bitfinex := block(exchanges.FillSymbol(provideBitfinexExchanges(), assets))
 	huobi := block(exchanges.FillSymbol(provideHuobiExchanges(), assets))
 	okex := block(exchanges.FillSymbol(provideOkexExchanges(), assets))
+	ftx := block(exchanges.FillSymbol(provideFtxExchanges(), assets))
 
 	fswap := provideFswapExchanges()
 	eswap := provideExinswapExchanges()
@@ -37,6 +39,7 @@ func provideAllExchanges(assets core.AssetService) map[string]core.Exchange {
 		bitfinex.Name(): bitfinex,
 		huobi.Name():    huobi,
 		okex.Name():     okex,
+		ftx.Name():      ftx,
 	}
 }
 
@@ -74,4 +77,8 @@ func provideHuobiExchanges() core.Exchange {
 
 func provideOkexExchanges() core.Exchange {
 	return okex.New()
+}
+
+func provideFtxExchanges() core.Exchange {
+	return ftx.New()
 }
