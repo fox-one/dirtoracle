@@ -2,11 +2,21 @@ package fswap
 
 import (
 	"context"
+	"encoding/json"
+	"io/ioutil"
 	"testing"
 
 	"github.com/fox-one/dirtoracle/core"
 	"github.com/stretchr/testify/require"
 )
+
+var assets []*core.Asset
+
+func init() {
+	if bts, err := ioutil.ReadFile("../testdata/assets.json"); err == nil {
+		json.Unmarshal(bts, &assets)
+	}
+}
 
 func TestGetPrice(t *testing.T) {
 	var (
@@ -14,15 +24,13 @@ func TestGetPrice(t *testing.T) {
 		ctx = context.Background()
 	)
 
-	{
-		asset := &core.Asset{
-			Symbol:  "BTC",
-			AssetID: "c6d0c728-2624-429b-8e0d-d9d19b6592fa",
-		}
-		p, err := b.GetPrice(ctx, asset)
-		require.Nil(t, err, "GetPrice")
-		t.Log("BTC price:", p)
-		require.True(t, p.IsPositive(), "BTC price not positive")
+	for _, a := range assets {
+		t.Run(b.Name()+"-"+a.Symbol, func(t *testing.T) {
+			p, err := b.GetPrice(ctx, a)
+			require.Nil(t, err, "GetPrice")
+			t.Log(a.Symbol, "price:", p)
+			require.True(t, p.IsPositive(), a.Symbol+" price not positive")
+		})
 	}
 
 	{
