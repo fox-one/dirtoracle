@@ -19,12 +19,12 @@ var httpClient = resty.New().
 	SetTimeout(10 * time.Second)
 
 type Error struct {
-	Code int    `json:"code,omitempty"`
+	Code string `json:"code,omitempty"`
 	Msg  string `json:"msg,omitempty"`
 }
 
 func (err *Error) Error() string {
-	return fmt.Sprintf("[%d] %s", err.Code, err.Msg)
+	return fmt.Sprintf("[%s] %s", err.Code, err.Msg)
 }
 
 func Request(ctx context.Context) *resty.Request {
@@ -34,7 +34,7 @@ func Request(ctx context.Context) *resty.Request {
 func DecodeResponse(resp *resty.Response) ([]byte, error) {
 	if resp.IsError() {
 		return nil, &Error{
-			Code: resp.StatusCode(),
+			Code: fmt.Sprint(resp.StatusCode()),
 			Msg:  resp.Status(),
 		}
 	}
@@ -43,7 +43,9 @@ func DecodeResponse(resp *resty.Response) ([]byte, error) {
 		Error
 		Body json.RawMessage `json:"data"`
 	}
-	if err := json.Unmarshal(resp.Body(), &body); err == nil && body.Code > 0 {
+	if err := json.Unmarshal(resp.Body(), &body); err != nil {
+		return nil, err
+	} else if body.Code != "0" {
 		return nil, &body.Error
 	}
 	return body.Body, nil
