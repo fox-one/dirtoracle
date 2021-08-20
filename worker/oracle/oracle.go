@@ -14,7 +14,7 @@ import (
 
 var (
 	maxDuration          = time.Minute
-	priceChangeThreshold = decimal.New(1, -2)
+	priceChangeThreshold = decimal.New(2, -2)
 )
 
 type (
