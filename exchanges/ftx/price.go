@@ -8,7 +8,7 @@ import (
 	"github.com/shopspring/decimal"
 )
 
-func (b *ftxEx) getPrice(ctx context.Context, symbol string) (decimal.Decimal, error) {
+func (exch *ftxEx) getPrice(ctx context.Context, symbol string) (decimal.Decimal, error) {
 	log := logger.FromContext(ctx)
 	uri := fmt.Sprintf("/markets/%s", symbol)
 	resp, err := Request(ctx).Get(uri)

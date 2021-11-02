@@ -2,18 +2,18 @@ package bitstamp
 
 import (
 	"context"
-	"strings"
 	"time"
 
 	"github.com/fox-one/dirtoracle/core"
-	"github.com/fox-one/pkg/logger"
+	"github.com/fox-one/dirtoracle/pkg/route"
 	"github.com/patrickmn/go-cache"
 	"github.com/shopspring/decimal"
-	"github.com/sirupsen/logrus"
 )
 
 const (
 	exchangeName = "bitstamp"
+
+	QuoteSymbol = "USD"
 )
 
 type bitstampEx struct {
@@ -30,31 +30,38 @@ func (*bitstampEx) Name() string {
 	return exchangeName
 }
 
-func (b *bitstampEx) GetPrice(ctx context.Context, a *core.Asset) (decimal.Decimal, error) {
-	pairSymbol := b.pairSymbol(b.assetSymbol(a.Symbol))
-	log := logger.FromContext(ctx).WithFields(logrus.Fields{
-		"exchange": b.Name(),
-		"symbol":   a.Symbol,
-		"pair":     pairSymbol,
-	})
-	ctx = logger.WithContext(ctx, log)
-
-	if ok, err := b.supported(ctx, pairSymbol); err != nil || !ok {
-		return decimal.Zero, err
+func (exch *bitstampEx) GetPrice(ctx context.Context, a *core.Asset) (decimal.Decimal, error) {
+	symbol := exch.assetSymbol(a.Symbol)
+	if symbol == QuoteSymbol {
+		return decimal.New(1, 0), nil
 	}
 
-	ticker, err := b.getTicker(ctx, pairSymbol)
+	pairs, err := exch.getPairs(ctx)
 	if err != nil {
 		return decimal.Zero, err
 	}
 
-	return ticker.Last, nil
+	routes, ok := route.FindRoutes(pairs, symbol, QuoteSymbol)
+	if !ok {
+		return decimal.Zero, err
+	}
+
+	var price = decimal.New(1, 0)
+	for _, route := range routes {
+		p, err := exch.getPrice(ctx, route.Symbol)
+		if err != nil {
+			return decimal.Zero, err
+		}
+		if route.Reverse {
+			price = price.Div(p)
+		} else {
+			price = price.Mul(p)
+		}
+	}
+
+	return price, nil
 }
 
 func (*bitstampEx) assetSymbol(symbol string) string {
 	return symbol
-}
-
-func (*bitstampEx) pairSymbol(symbol string) string {
-	return strings.ToLower(symbol) + "usd"
 }

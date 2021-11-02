@@ -22,20 +22,20 @@ type (
 	}
 )
 
-func (b *bitstampEx) getTicker(ctx context.Context, symbol string) (*Ticker, error) {
+func (exch *bitstampEx) getPrice(ctx context.Context, symbol string) (decimal.Decimal, error) {
 	log := logger.FromContext(ctx)
 	uri := fmt.Sprintf("/ticker/%s", symbol)
 	resp, err := Request(ctx).Get(uri)
 	if err != nil {
 		log.WithError(err).Errorln("GET", uri)
-		return nil, err
+		return decimal.Zero, err
 	}
 
 	var ticker Ticker
 	if err := UnmarshalResponse(resp, &ticker); err != nil {
-		log.WithError(err).Errorln("getTicker.UnmarshalResponse")
-		return nil, err
+		log.WithError(err).Errorln("getPrice.UnmarshalResponse")
+		return decimal.Zero, err
 	}
 
-	return &ticker, nil
+	return ticker.Bid, nil
 }

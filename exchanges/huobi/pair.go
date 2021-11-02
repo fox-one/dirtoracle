@@ -2,8 +2,10 @@ package huobi
 
 import (
 	"context"
+	"strings"
 	"time"
 
+	"github.com/fox-one/dirtoracle/pkg/route"
 	"github.com/fox-one/pkg/logger"
 )
 
@@ -20,15 +22,36 @@ type (
 
 	Pair struct {
 		Symbol     string    `json:"symbol,omitempty"`
-		State      PairState `json:"state,omitempty"`
+		Status     PairState `json:"state,omitempty"`
 		BaseAsset  string    `json:"base-currency,omitempty"`
 		QuoteAsset string    `json:"quote-currency,omitempty"`
 	}
+
+	Pairs []*Pair
 )
 
-func (b *huobiEx) getPairs(ctx context.Context) ([]*Pair, error) {
-	if pairs, ok := b.cache.Get(pairsKey); ok {
-		return pairs.([]*Pair), nil
+func (pair Pair) IsOnline() bool {
+	return pair.Status == PairStateOnline
+}
+
+func (pairs Pairs) export() []*route.Pair {
+	items := make([]*route.Pair, 0, len(pairs))
+	for _, pair := range pairs {
+		if !pair.IsOnline() {
+			continue
+		}
+		items = append(items, &route.Pair{
+			Symbol: pair.Symbol,
+			Base:   pair.BaseAsset,
+			Quote:  pair.QuoteAsset,
+		})
+	}
+	return items
+}
+
+func (exch *huobiEx) getPairs(ctx context.Context) ([]*route.Pair, error) {
+	if pairs, ok := exch.cache.Get(pairsKey); ok {
+		return pairs.([]*route.Pair), nil
 	}
 
 	log := logger.FromContext(ctx)
@@ -40,27 +63,19 @@ func (b *huobiEx) getPairs(ctx context.Context) ([]*Pair, error) {
 	}
 
 	var body struct {
-		Pairs []*Pair `json:"data"`
+		Pairs Pairs `json:"data"`
 	}
 	if err := UnmarshalResponse(resp, &body); err != nil {
 		log.WithError(err).Errorln("getPairs.UnmarshalResponse")
 		return nil, err
 	}
 
-	b.cache.Set(pairsKey, body.Pairs, time.Minute*10)
-	return body.Pairs, nil
-}
-
-func (b *huobiEx) supported(ctx context.Context, symbol string) (bool, error) {
-	pairs, err := b.getPairs(ctx)
-	if err != nil {
-		return false, err
+	for _, pair := range body.Pairs {
+		pair.BaseAsset = strings.ToUpper(pair.BaseAsset)
+		pair.QuoteAsset = strings.ToUpper(pair.QuoteAsset)
 	}
 
-	for _, pair := range pairs {
-		if pair.Symbol == symbol {
-			return pair.State == PairStateOnline, nil
-		}
-	}
-	return false, nil
+	exported := body.Pairs.export()
+	exch.cache.Set(pairsKey, exported, time.Minute*10)
+	return exported, nil
 }

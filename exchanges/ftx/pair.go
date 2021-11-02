@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/fox-one/dirtoracle/pkg/route"
 	"github.com/fox-one/pkg/logger"
 )
 
@@ -29,11 +30,32 @@ type (
 		BaseCurrency  string  `json:"baseCurrency,omitempty"`
 		QuoteCurrency string  `json:"quoteCurrency,omitempty"`
 	}
+
+	Pairs []*Pair
 )
 
-func (c *ftxEx) getPairs(ctx context.Context) ([]*Pair, error) {
-	if pairs, ok := c.cache.Get(pairsKey); ok {
-		return pairs.([]*Pair), nil
+func (pair Pair) IsOnline() bool {
+	return pair.Enabled && !pair.PostOnly
+}
+
+func (pairs Pairs) export() []*route.Pair {
+	items := make([]*route.Pair, 0, len(pairs))
+	for _, pair := range pairs {
+		if !pair.IsOnline() {
+			continue
+		}
+		items = append(items, &route.Pair{
+			Symbol: pair.Name,
+			Base:   pair.BaseCurrency,
+			Quote:  pair.QuoteCurrency,
+		})
+	}
+	return items
+}
+
+func (exch *ftxEx) getPairs(ctx context.Context) ([]*route.Pair, error) {
+	if pairs, ok := exch.cache.Get(pairsKey); ok {
+		return pairs.([]*route.Pair), nil
 	}
 
 	log := logger.FromContext(ctx)
@@ -43,26 +65,13 @@ func (c *ftxEx) getPairs(ctx context.Context) ([]*Pair, error) {
 		return nil, err
 	}
 
-	var pairs []*Pair
+	var pairs Pairs
 	if err := UnmarshalResponse(resp, &pairs); err != nil {
 		log.WithError(err).Errorln("getPairs.UnmarshalResponse")
 		return nil, err
 	}
 
-	c.cache.Set(pairsKey, pairs, time.Hour)
-	return pairs, nil
-}
-
-func (c *ftxEx) supported(ctx context.Context, symbol string) (bool, error) {
-	pairs, err := c.getPairs(ctx)
-	if err != nil {
-		return false, err
-	}
-
-	for _, pair := range pairs {
-		if pair.Name == symbol {
-			return pair.Enabled && !pair.PostOnly, nil
-		}
-	}
-	return false, nil
+	exported := pairs.export()
+	exch.cache.Set(pairsKey, exported, time.Hour)
+	return exported, nil
 }

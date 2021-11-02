@@ -17,7 +17,7 @@ type (
 	}
 )
 
-func (b *okexEx) getPrice(ctx context.Context, symbol string) (decimal.Decimal, error) {
+func (exch *okexEx) getPrice(ctx context.Context, symbol string) (decimal.Decimal, error) {
 	log := logger.FromContext(ctx)
 	uri := "/v5/market/ticker"
 	resp, err := Request(ctx).SetQueryParam("instId", symbol).Get(uri)

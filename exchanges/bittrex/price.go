@@ -17,25 +17,7 @@ type (
 	}
 )
 
-func (b *bittrexEx) getTickers(ctx context.Context) ([]*Ticker, error) {
-	log := logger.FromContext(ctx)
-	uri := "/markets/tickers"
-	resp, err := Request(ctx).Get(uri)
-	if err != nil {
-		log.WithError(err).Errorln("GET", uri)
-		return nil, err
-	}
-
-	var tickers []*Ticker
-	if err := UnmarshalResponse(resp, &tickers); err != nil {
-		log.WithError(err).Errorln("getTicker.UnmarshalResponse")
-		return nil, err
-	}
-
-	return tickers, nil
-}
-
-func (b *bittrexEx) getPrice(ctx context.Context, symbol string) (decimal.Decimal, error) {
+func (exch *bittrexEx) getPrice(ctx context.Context, symbol string) (decimal.Decimal, error) {
 	log := logger.FromContext(ctx)
 	uri := fmt.Sprintf("/markets/%s/ticker", symbol)
 	resp, err := Request(ctx).Get(uri)
