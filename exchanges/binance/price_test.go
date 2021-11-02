@@ -7,6 +7,8 @@ import (
 	"testing"
 
 	"github.com/fox-one/dirtoracle/core"
+	"github.com/fox-one/dirtoracle/exchanges"
+	"github.com/fox-one/dirtoracle/exchanges/fswap"
 	"github.com/stretchr/testify/require"
 )
 
@@ -20,15 +22,18 @@ func init() {
 
 func TestGetPrice(t *testing.T) {
 	var (
-		exch = New()
-		ctx  = context.Background()
+		exch = exchanges.PusdConverter(New(), fswap.New(), &core.Asset{
+			AssetID: "9b180ab6-6abe-3dc0-a13f-04169eb34bfa",
+			Symbol:  "USDC",
+		})
+		ctx = context.Background()
 	)
 
 	for _, a := range assets {
 		t.Run(exch.Name()+"-"+a.Symbol, func(t *testing.T) {
 			p, err := exch.GetPrice(ctx, a)
+			t.Log(exch.Name(), a.Symbol, "price:", p)
 			require.Nil(t, err, "GetPrice")
-			t.Log(a.Symbol, "price:", p)
 			require.True(t, p.IsPositive(), a.Symbol+" price not positive")
 		})
 	}

@@ -37,6 +37,10 @@ func (*eswapEx) Name() string {
 }
 
 func (f *eswapEx) GetPrice(ctx context.Context, a *core.Asset) (decimal.Decimal, error) {
+	if a.AssetID == pusdAsset {
+		return decimal.New(1, 0), nil
+	}
+
 	log := logger.FromContext(ctx).WithFields(logrus.Fields{
 		"exchange": f.Name(),
 		"symbol":   a.Symbol,

@@ -16,18 +16,27 @@ import (
 )
 
 func provideAllExchanges(assets core.AssetService) map[string]core.Exchange {
-	block := exchanges.Block("f5ef6b5d-cc5a-3d90-b2c0-a2fd386e7a3c", "c94ac88f-4671-3976-b60a-09064f1811e8")
-	binance := block(exchanges.FillSymbol(provideBinanceExchanges(), assets))
-	coinbase := block(exchanges.FillSymbol(provideCoinbaseExchanges(), assets))
-	bitstamp := block(exchanges.FillSymbol(provideBitstampExchanges(), assets))
-	bittrex := block(exchanges.FillSymbol(provideBittrexExchanges(), assets))
-	bitfinex := block(exchanges.FillSymbol(provideBitfinexExchanges(), assets))
-	huobi := block(exchanges.FillSymbol(provideHuobiExchanges(), assets))
-	okex := block(exchanges.FillSymbol(provideOkexExchanges(), assets))
-	ftx := block(exchanges.FillSymbol(provideFtxExchanges(), assets))
-
 	fswap := provideFswapExchanges()
 	eswap := provideExinswapExchanges()
+
+	dai := &core.Asset{
+		AssetID: "8549b4ad-917c-3461-a646-481adc5d7f7f",
+		Symbol:  "DAI",
+	}
+	usdc := &core.Asset{
+		AssetID: "9b180ab6-6abe-3dc0-a13f-04169eb34bfa",
+		Symbol:  "USDC",
+	}
+
+	block := exchanges.Block("f5ef6b5d-cc5a-3d90-b2c0-a2fd386e7a3c", "c94ac88f-4671-3976-b60a-09064f1811e8")
+	binance := block(exchanges.PusdConverter(exchanges.FillSymbol(provideBinanceExchanges(), assets), fswap, usdc))
+	coinbase := block(exchanges.PusdConverter(exchanges.FillSymbol(provideCoinbaseExchanges(), assets), fswap, usdc))
+	bitstamp := block(exchanges.PusdConverter(exchanges.FillSymbol(provideBitstampExchanges(), assets), fswap, usdc))
+	bittrex := block(exchanges.PusdConverter(exchanges.FillSymbol(provideBittrexExchanges(), assets), fswap, usdc))
+	bitfinex := block(exchanges.PusdConverter(exchanges.FillSymbol(provideBitfinexExchanges(), assets), fswap, usdc))
+	huobi := block(exchanges.PusdConverter(exchanges.FillSymbol(provideHuobiExchanges(), assets), fswap, usdc))
+	okex := block(exchanges.PusdConverter(exchanges.FillSymbol(provideOkexExchanges(), assets), fswap, usdc))
+	ftx := block(exchanges.PusdConverter(exchanges.FillSymbol(provideFtxExchanges(), assets), fswap, dai))
 
 	return map[string]core.Exchange{
 		fswap.Name():    fswap,
