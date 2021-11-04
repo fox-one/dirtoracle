@@ -73,8 +73,8 @@ var workerCmd = &cobra.Command{
 			}
 
 			ex = exchanges.Cache(ex, time.Minute)
-			ex = bwatch.New(ex)
-			ex = fswap.Lp(ex)
+			ex = exchanges.Humanize(bwatch.New(ex))
+			ex = exchanges.Humanize(fswap.Lp(ex))
 			ex = exchanges.Cache(ex, time.Minute)
 		}
 

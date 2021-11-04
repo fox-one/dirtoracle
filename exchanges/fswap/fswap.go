@@ -28,7 +28,7 @@ type (
 )
 
 func init() {
-	fswapsdk.UseEndpoint("https://f1-mtgswap-api.firesbox.com")
+	fswapsdk.UseEndpoint("https://lake-api.pando.im")
 }
 
 func New() core.Exchange {
@@ -42,6 +42,10 @@ func (*fswapEx) Name() string {
 }
 
 func (f *fswapEx) GetPrice(ctx context.Context, a *core.Asset) (decimal.Decimal, error) {
+	if a.AssetID == pusdAsset {
+		return decimal.New(1, 0), nil
+	}
+
 	log := logger.FromContext(ctx).WithFields(logrus.Fields{
 		"exchange": f.Name(),
 		"symbol":   a.Symbol,

@@ -5,8 +5,11 @@ import (
 	"encoding/json"
 	"io/ioutil"
 	"testing"
+	"time"
 
 	"github.com/fox-one/dirtoracle/core"
+	"github.com/fox-one/dirtoracle/exchanges"
+	"github.com/fox-one/dirtoracle/exchanges/fswap"
 	"github.com/stretchr/testify/require"
 )
 
@@ -20,38 +23,20 @@ func init() {
 
 func TestGetPrice(t *testing.T) {
 	var (
-		b   = New()
+		exch = exchanges.Humanize(exchanges.PusdConverter(New(), fswap.New(), &core.Asset{
+			AssetID: "9b180ab6-6abe-3dc0-a13f-04169eb34bfa",
+			Symbol:  "USDC",
+		}))
 		ctx = context.Background()
 	)
 
 	for _, a := range assets {
-		t.Run(b.Name()+"-"+a.Symbol, func(t *testing.T) {
-			p, err := b.GetPrice(ctx, a)
+		t.Run(exch.Name()+"-"+a.Symbol, func(t *testing.T) {
+			p, err := exch.GetPrice(ctx, a)
+			t.Log(exch.Name(), a.Symbol, "price:", p)
 			require.Nil(t, err, "GetPrice")
-			t.Log(a.Symbol, "price:", p)
-			require.True(t, p.IsPositive(), a.Symbol+" price not positive")
+
+			time.Sleep(time.Millisecond * 100)
 		})
-	}
-
-	{
-		asset := &core.Asset{
-			Symbol:  "XIN",
-			AssetID: "c94ac88f-4671-3976-b60a-09064f1811e8",
-		}
-		p, err := b.GetPrice(ctx, asset)
-		require.Nil(t, err, "GetPrice")
-		t.Log("XIN price:", p)
-		require.True(t, p.IsZero(), "XIN was not listed")
-	}
-
-	{
-		asset := &core.Asset{
-			Symbol:  "BOX",
-			AssetID: "f5ef6b5d-cc5a-3d90-b2c0-a2fd386e7a3c",
-		}
-		p, err := b.GetPrice(ctx, asset)
-		require.Nil(t, err, "GetPrice")
-		t.Log("BOX price:", p)
-		require.True(t, p.IsZero(), "BOX was not listed")
 	}
 }

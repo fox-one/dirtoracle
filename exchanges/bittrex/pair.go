@@ -1,4 +1,4 @@
-package coinbase
+package bittrex
 
 import (
 	"context"
@@ -11,30 +11,24 @@ import (
 const (
 	pairsKey = "pairs"
 
-	PairStatusOnline = "online"
+	TradingStatusOnline = "ONLINE"
 )
 
 type (
-	PairStatus string
+	TradingStatus string
 
 	Pair struct {
-		ID              string     `json:"id,omitempty"`
-		DisplayName     string     `json:"display_name,omitempty"`
-		BaseCurrency    string     `json:"base_currency,omitempty"`
-		QuoteCurrency   string     `json:"quote_currency,omitempty"`
-		Status          PairStatus `json:"status,omitempty"`
-		StatusMessage   string     `json:"status_message,omitempty"`
-		CancelOnly      bool       `json:"cancel_only"`
-		LimitOnly       bool       `json:"limit_only"`
-		PostOnly        bool       `json:"post_only"`
-		TradingDisabled bool       `json:"trading_disabled"`
+		Symbol        string `json:"symbol,omitempty"`
+		BaseCurrency  string `json:"baseCurrencySymbol,omitempty"`
+		QuoteCurrency string `json:"quoteCurrencySymbol,omitempty"`
+		Status        string `json:"status,omitempty"`
 	}
 
 	Pairs []*Pair
 )
 
 func (pair Pair) IsOnline() bool {
-	return pair.Status == PairStatusOnline && !pair.CancelOnly && !pair.PostOnly && !pair.TradingDisabled
+	return pair.Status == TradingStatusOnline
 }
 
 func (pairs Pairs) export() []*route.Pair {
@@ -44,7 +38,7 @@ func (pairs Pairs) export() []*route.Pair {
 			continue
 		}
 		items = append(items, &route.Pair{
-			Symbol: pair.ID,
+			Symbol: pair.Symbol,
 			Base:   pair.BaseCurrency,
 			Quote:  pair.QuoteCurrency,
 		})
@@ -52,15 +46,15 @@ func (pairs Pairs) export() []*route.Pair {
 	return items
 }
 
-func (exch *coinbaseEx) getPairs(ctx context.Context) ([]*route.Pair, error) {
+func (exch *bittrexEx) getPairs(ctx context.Context) ([]*route.Pair, error) {
 	if pairs, ok := exch.cache.Get(pairsKey); ok {
 		return pairs.([]*route.Pair), nil
 	}
 
 	log := logger.FromContext(ctx)
-	resp, err := Request(ctx).Get("/products")
+	resp, err := Request(ctx).Get("/markets")
 	if err != nil {
-		log.WithError(err).Errorln("GET /products")
+		log.WithError(err).Errorln("GET /markets")
 		return nil, err
 	}
 

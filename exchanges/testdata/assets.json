@@ -16,20 +16,12 @@
         "asset_id": "6770a1e5-6086-44d5-b60f-545f9d9e8ffd"
     },
     {
-        "symbol": "ZEC",
-        "asset_id": "c996abc9-d94e-4494-b1cf-2a3fd3ac5714"
-    },
-    {
         "symbol": "DOT",
         "asset_id": "54c61a72-b982-4034-a556-0d99e3c21e39"
     },
     {
         "symbol": "LTC",
         "asset_id": "76c802a2-7c88-447f-a93e-c29c9e5dd9c8"
-    },
-    {
-        "symbol": "SC",
-        "asset_id": "990c4c29-57e9-48f6-9819-7d986ea44985"
     },
     {
         "symbol": "ZEN",

@@ -18,26 +18,6 @@ type (
 	}
 )
 
-func (b *huobiEx) getTickers(ctx context.Context) ([]*Ticker, error) {
-	log := logger.FromContext(ctx)
-	uri := "/market/tickers"
-	resp, err := Request(ctx).Get(uri)
-	if err != nil {
-		log.WithError(err).Errorln("GET", uri)
-		return nil, err
-	}
-
-	var body struct {
-		Tickers []*Ticker `json:"data"`
-	}
-	if err := UnmarshalResponse(resp, &body); err != nil {
-		log.WithError(err).Errorln("getTicker.UnmarshalResponse")
-		return nil, err
-	}
-
-	return body.Tickers, nil
-}
-
 func (b *huobiEx) getPrice(ctx context.Context, symbol string) (decimal.Decimal, error) {
 	log := logger.FromContext(ctx)
 	uri := "/market/detail/merged"

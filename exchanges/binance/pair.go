@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/fox-one/dirtoracle/pkg/route"
 	"github.com/fox-one/pkg/logger"
 )
 
@@ -23,16 +24,38 @@ type (
 	PairStatus string
 
 	Pair struct {
-		Symbol     string     `json:"symbol,omitempty"`
-		Status     PairStatus `json:"status,omitempty"`
-		BaseAsset  string     `json:"baseAsset,omitempty"`
-		QuoteAsset string     `json:"quoteAsset,omitempty"`
+		Symbol               string     `json:"symbol,omitempty"`
+		Status               PairStatus `json:"status,omitempty"`
+		BaseAsset            string     `json:"baseAsset,omitempty"`
+		QuoteAsset           string     `json:"quoteAsset,omitempty"`
+		IsSpotTradingAllowed bool       `json:"isSpotTradingAllowed,omitempty"`
 	}
+
+	Pairs []*Pair
 )
 
-func (b *binanceEx) getPairs(ctx context.Context) ([]*Pair, error) {
-	if pairs, ok := b.cache.Get(pairsKey); ok {
-		return pairs.([]*Pair), nil
+func (pair Pair) IsOnline() bool {
+	return pair.Status == PairStatusTrading && pair.IsSpotTradingAllowed
+}
+
+func (pairs Pairs) export() []*route.Pair {
+	items := make([]*route.Pair, 0, len(pairs))
+	for _, pair := range pairs {
+		if !pair.IsOnline() {
+			continue
+		}
+		items = append(items, &route.Pair{
+			Symbol: pair.Symbol,
+			Base:   pair.BaseAsset,
+			Quote:  pair.QuoteAsset,
+		})
+	}
+	return items
+}
+
+func (exch *binanceEx) getPairs(ctx context.Context) ([]*route.Pair, error) {
+	if pairs, ok := exch.cache.Get(pairsKey); ok {
+		return pairs.([]*route.Pair), nil
 	}
 
 	log := logger.FromContext(ctx)
@@ -43,27 +66,14 @@ func (b *binanceEx) getPairs(ctx context.Context) ([]*Pair, error) {
 	}
 
 	var info struct {
-		Pairs []*Pair `json:"symbols,omitempty"`
+		Pairs Pairs `json:"symbols,omitempty"`
 	}
 	if err := UnmarshalResponse(resp, &info); err != nil {
 		log.WithError(err).Errorln("getPairs.UnmarshalResponse")
 		return nil, err
 	}
 
-	b.cache.Set(pairsKey, info.Pairs, time.Minute*10)
-	return info.Pairs, nil
-}
-
-func (b *binanceEx) supported(ctx context.Context, symbol string) (bool, error) {
-	pairs, err := b.getPairs(ctx)
-	if err != nil {
-		return false, err
-	}
-
-	for _, pair := range pairs {
-		if pair.Symbol == symbol {
-			return pair.Status == PairStatusTrading, nil
-		}
-	}
-	return false, nil
+	pairs := info.Pairs.export()
+	exch.cache.Set(pairsKey, pairs, time.Minute*10)
+	return pairs, nil
 }

@@ -20,7 +20,7 @@ type (
 	}
 )
 
-func (b *coinbaseEx) getPrice(ctx context.Context, symbol string) (decimal.Decimal, error) {
+func (exch *coinbaseEx) getPrice(ctx context.Context, symbol string) (decimal.Decimal, error) {
 	log := logger.FromContext(ctx)
 	uri := fmt.Sprintf("/products/%s/ticker", symbol)
 	resp, err := Request(ctx).Get(uri)
