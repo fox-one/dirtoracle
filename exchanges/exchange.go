@@ -122,3 +122,31 @@ func (a *assetEx) GetPrice(ctx context.Context, asset *core.Asset) (decimal.Deci
 
 	return a.Exchange.GetPrice(ctx, asset)
 }
+
+func Humanize(ex core.Exchange) core.Exchange {
+	return &humanizeEx{
+		Exchange: ex,
+	}
+}
+
+type humanizeEx struct {
+	core.Exchange
+}
+
+func (c *humanizeEx) GetPrice(ctx context.Context, asset *core.Asset) (decimal.Decimal, error) {
+	price, err := c.Exchange.GetPrice(ctx, asset)
+	if err != nil {
+		return price, err
+	}
+
+	return c.humanizeDecimal(price), nil
+}
+
+func (c *humanizeEx) humanizeDecimal(price decimal.Decimal) decimal.Decimal {
+	for i := 0; i < 8; i++ {
+		if price.GreaterThanOrEqual(decimal.New(1, 4-int32(i))) {
+			return price.Truncate(int32(i))
+		}
+	}
+	return price.Truncate(8)
+}
