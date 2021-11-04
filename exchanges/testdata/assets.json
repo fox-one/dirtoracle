@@ -8,48 +8,24 @@
         "asset_id": "43d61dcd-e413-450d-80b8-101d5e903357"
     },
     {
-        "symbol": "USDT",
-        "asset_id": "4d8c508b-91c5-375b-92b0-ee702ed2dac5"
-    },
-    {
         "symbol": "EOS",
         "asset_id": "6cfe566e-4aad-470b-8c9a-2fd35b49c68d"
-    },
-    {
-        "symbol": "DOT",
-        "asset_id": "54c61a72-b982-4034-a556-0d99e3c21e39"
-    },
-    {
-        "symbol": "UNI",
-        "asset_id": "a31e847e-ca87-3162-b4d1-322bc552e831"
-    },
-    {
-        "symbol": "LTC",
-        "asset_id": "76c802a2-7c88-447f-a93e-c29c9e5dd9c8"
-    },
-    {
-        "symbol": "MANA",
-        "asset_id": "c3dc19ae-d087-3279-ac51-dc655940256a"
     },
     {
         "symbol": "DOGE",
         "asset_id": "6770a1e5-6086-44d5-b60f-545f9d9e8ffd"
     },
     {
-        "symbol": "ZEC",
-        "asset_id": "c996abc9-d94e-4494-b1cf-2a3fd3ac5714"
+        "symbol": "DOT",
+        "asset_id": "54c61a72-b982-4034-a556-0d99e3c21e39"
     },
     {
-        "symbol": "USDC",
-        "asset_id": "9b180ab6-6abe-3dc0-a13f-04169eb34bfa"
+        "symbol": "LTC",
+        "asset_id": "76c802a2-7c88-447f-a93e-c29c9e5dd9c8"
     },
     {
-        "symbol": "SHIB",
-        "asset_id": "dcde18b9-f015-326f-b8b1-5b820a060e44"
-    },
-    {
-        "symbol": "SC",
-        "asset_id": "990c4c29-57e9-48f6-9819-7d986ea44985"
+        "symbol": "ZEN",
+        "asset_id": "a2c5d22b-62a2-4c13-b3f0-013290dbac60"
     },
     {
         "symbol": "BCH",
@@ -60,107 +36,11 @@
         "asset_id": "08285081-e1d8-4be6-9edc-e203afa932da"
     },
     {
-        "symbol": "ZEN",
-        "asset_id": "a2c5d22b-62a2-4c13-b3f0-013290dbac60"
+        "symbol": "MOB",
+        "asset_id": "eea900a8-b327-488c-8d8d-1428702fe240"
     },
     {
-        "symbol": "VCASH",
-        "asset_id": "c3b9153a-7fab-4138-a3a4-99849cadc073"
-    },
-    {
-        "symbol": "HNS",
-        "asset_id": "13036886-6b83-4ced-8d44-9f69151587bf"
-    },
-    {
-        "symbol": "SOL",
-        "asset_id": "64692c23-8971-4cf4-84a7-4dd1271dd887"
-    },
-    {
-        "symbol": "BNB",
-        "asset_id": "17f78d7c-ed96-40ff-980c-5dc62fecbc85"
-    },
-    {
-        "symbol": "DCR",
-        "asset_id": "8f5caf2a-283d-4c85-832a-91e83bbf290b"
-    },
-    {
-        "symbol": "CKB",
-        "asset_id": "d243386e-6d84-42e6-be03-175be17bf275"
-    },
-    {
-        "symbol": "XMR",
-        "asset_id": "05c5ac01-31f9-4a69-aa8a-ab796de1d041"
-    },
-    {
-        "symbol": "XRP",
-        "asset_id": "23dfb5a5-5d7b-48b6-905f-3970e3176e27"
-    },
-    {
-        "symbol": "WBTC",
-        "asset_id": "83c8bfca-78ee-3845-9e6c-e3d69e7b381c"
-    },
-    {
-        "symbol": "DYDX",
-        "asset_id": "fd86e3bc-faeb-3f62-ad09-b59d2ebcc59c"
-    },
-    {
-        "symbol": "ATOM",
-        "asset_id": "7397e9f1-4e42-4dc8-8a3b-171daaadd436"
-    },
-    {
-        "symbol": "HMT",
-        "asset_id": "30e340a7-3284-3f04-8594-fbdd8f2da79f"
-    },
-    {
-        "symbol": "BTT",
-        "asset_id": "47b13785-25e2-3c5c-ac6b-3713e9c31c22"
-    },
-    {
-        "symbol": "AR",
-        "asset_id": "882eb041-64ea-465f-a4da-817bd3020f52"
-    },
-    {
-        "symbol": "TRX",
-        "asset_id": "25dabac5-056a-48ff-b9f9-f67395dc407c"
-    },
-    {
-        "symbol": "LINK",
-        "asset_id": "f6f1c01c-8489-3346-b127-dc0dc09b9ce7"
-    },
-    {
-        "symbol": "FTT",
-        "asset_id": "0c79a53f-9caf-3e7c-a3ce-1edcba33301f"
-    },
-    {
-        "symbol": "MATIC",
-        "asset_id": "9682b8e9-6f16-3729-b07b-bc3bc56e5d79"
-    },
-    {
-        "symbol": "BSV",
-        "asset_id": "574388fd-b93f-4034-a682-01c2bc095d17"
-    },
-    {
-        "symbol": "IQ",
-        "asset_id": "336d5d97-329c-330d-8e62-2b7c9ba40ea0"
-    },
-    {
-        "symbol": "DASH",
-        "asset_id": "6472e7e3-75fd-48b6-b1dc-28d294ee1476"
-    },
-    {
-        "symbol": "HT",
-        "asset_id": "f1d987df-1835-3f03-aefd-5e3e4132d11e"
-    },
-    {
-        "symbol": "SIM",
-        "asset_id": "8b79271e-b8b1-3782-8b4b-b8cf6cf10881"
-    },
-    {
-        "symbol": "NMC",
-        "asset_id": "f8b77dc0-46fd-4ea1-9821-587342475869"
-    },
-    {
-        "symbol": "ETC",
-        "asset_id": "2204c1ee-0ea2-4add-bb9a-b3719cfff93a"
+        "symbol": "UNI",
+        "asset_id": "a31e847e-ca87-3162-b4d1-322bc552e831"
     }
 ]

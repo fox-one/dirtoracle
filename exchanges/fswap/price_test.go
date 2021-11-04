@@ -7,6 +7,7 @@ import (
 	"testing"
 
 	"github.com/fox-one/dirtoracle/core"
+	"github.com/fox-one/dirtoracle/exchanges"
 	"github.com/stretchr/testify/require"
 )
 
@@ -20,7 +21,7 @@ func init() {
 
 func TestGetPrice(t *testing.T) {
 	var (
-		exch = New()
+		exch = exchanges.Humanize(New())
 		ctx  = context.Background()
 	)
 
@@ -29,7 +30,6 @@ func TestGetPrice(t *testing.T) {
 			p, err := exch.GetPrice(ctx, a)
 			t.Log(exch.Name(), a.Symbol, "price:", p)
 			require.Nil(t, err, "GetPrice")
-			require.True(t, p.IsPositive(), a.Symbol+" price not positive")
 		})
 	}
 

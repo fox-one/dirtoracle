@@ -22,10 +22,10 @@ func init() {
 
 func TestGetPrice(t *testing.T) {
 	var (
-		exch = exchanges.PusdConverter(New(), fswap.New(), &core.Asset{
+		exch = exchanges.Humanize(exchanges.PusdConverter(New(), fswap.New(), &core.Asset{
 			AssetID: "8549b4ad-917c-3461-a646-481adc5d7f7f",
 			Symbol:  "DAI",
-		})
+		}))
 		ctx = context.Background()
 	)
 
@@ -34,29 +34,6 @@ func TestGetPrice(t *testing.T) {
 			p, err := exch.GetPrice(ctx, a)
 			t.Log(exch.Name(), a.Symbol, "price:", p)
 			require.Nil(t, err, "GetPrice")
-			require.True(t, p.IsPositive(), a.Symbol+" price not positive")
 		})
-	}
-
-	{
-		asset := &core.Asset{
-			Symbol:  "XIN",
-			AssetID: "c94ac88f-4671-3976-b60a-09064f1811e8",
-		}
-		p, err := exch.GetPrice(ctx, asset)
-		require.Nil(t, err, "GetPrice")
-		t.Log("XIN price:", p)
-		require.True(t, p.IsZero(), "XIN was not listed")
-	}
-
-	{
-		asset := &core.Asset{
-			Symbol:  "BOX",
-			AssetID: "f5ef6b5d-cc5a-3d90-b2c0-a2fd386e7a3c",
-		}
-		p, err := exch.GetPrice(ctx, asset)
-		require.Nil(t, err, "GetPrice")
-		t.Log("BOX price:", p)
-		require.True(t, p.IsZero(), "BOX was not listed")
 	}
 }

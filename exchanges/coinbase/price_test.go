@@ -22,10 +22,10 @@ func init() {
 
 func TestGetPrice(t *testing.T) {
 	var (
-		exch = exchanges.PusdConverter(New(), fswap.New(), &core.Asset{
+		exch = exchanges.Humanize(exchanges.PusdConverter(New(), fswap.New(), &core.Asset{
 			AssetID: "9b180ab6-6abe-3dc0-a13f-04169eb34bfa",
 			Symbol:  "USDC",
-		})
+		}))
 		ctx = context.Background()
 	)
 
@@ -34,7 +34,6 @@ func TestGetPrice(t *testing.T) {
 			p, err := exch.GetPrice(ctx, a)
 			t.Log(exch.Name(), a.Symbol, "price:", p)
 			require.Nil(t, err, "GetPrice")
-			require.True(t, p.IsPositive(), a.Symbol+" price not positive")
 		})
 	}
 
