@@ -12,6 +12,7 @@ import (
 	"github.com/fox-one/pkg/logger"
 	"github.com/fox-one/pkg/uuid"
 	"github.com/pandodao/blst"
+	"github.com/sirupsen/logrus"
 	"golang.org/x/sync/errgroup"
 )
 
@@ -76,7 +77,12 @@ func (m *Oracle) handleSubscriber(ctx context.Context, subscriber *core.Subscrib
 }
 
 func (m *Oracle) handlePriceRequest(ctx context.Context, subscriber *core.Subscriber, req *core.PriceRequest) error {
-	log := logger.FromContext(ctx)
+	log := logger.FromContext(ctx).WithFields(logrus.Fields{
+		"subscriber": subscriber.Name,
+		"asset":      req.AssetID,
+		"symbol":     req.Symbol,
+	})
+	ctx = logger.WithContext(ctx, log)
 
 	if p := m.cachedProposal(req.TraceID); p != nil {
 		return nil
@@ -118,6 +124,9 @@ func (m *Oracle) handlePriceRequest(ctx context.Context, subscriber *core.Subscr
 		resp := m.system.SignProposal(&proposal.ProposalRequest, signer.Index)
 		proposal.ProposalRequest.Signature = resp
 		proposal.Signatures[signer.Index] = resp.Signature
+
+		log = logger.FromContext(ctx).WithField("price", price)
+		ctx = logger.WithContext(ctx, log)
 	}
 
 	// send and cache proposal
