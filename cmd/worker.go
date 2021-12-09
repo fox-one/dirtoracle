@@ -56,27 +56,10 @@ var workerCmd = &cobra.Command{
 		wallets := provideWalletStore(database)
 		walletz := provideWalletService(client)
 		system := provideSystem()
+		assetz := provideAssetService(client)
 
-		var ex core.Exchange
-		{
-			assetz := provideAssetService(client)
-			m := provideAllExchanges(assetz)
-			arr, _ := cmd.Flags().GetStringArray("exchanges")
-			for _, n := range arr {
-				if e, ok := m[n]; ok {
-					if ex == nil {
-						ex = e
-					} else {
-						ex = exchanges.Chain(ex, e)
-					}
-				}
-			}
-
-			ex = exchanges.Cache(ex, time.Minute)
-			ex = exchanges.Humanize(bwatch.New(ex))
-			ex = exchanges.Humanize(fswap.Lp(ex))
-			ex = exchanges.Cache(ex, time.Minute)
-		}
+		exs, _ := cmd.Flags().GetStringArray("exchanges")
+		ex := loadExchange(assetz, exs)
 
 		workers := []worker.Worker{
 			oracle.New(ex, client, wallets, subscribers, system),
@@ -118,6 +101,26 @@ var workerCmd = &cobra.Command{
 			cmd.PrintErrln("run worker", err)
 		}
 	},
+}
+
+func loadExchange(assetz core.AssetService, exchNames []string) core.Exchange {
+	var exch core.Exchange
+	exchs := provideAllExchanges(assetz)
+	for _, exchName := range exchNames {
+		if e, ok := exchs[exchName]; ok {
+			if exch == nil {
+				exch = e
+			} else {
+				exch = exchanges.Chain(exch, e)
+			}
+		}
+	}
+
+	exch = exchanges.Cache(exch, time.Minute)
+	exch = bwatch.New(exch)
+	exch = exchanges.Humanize(fswap.Lp(exch))
+	exch = exchanges.Cache(exch, time.Minute)
+	return exch
 }
 
 func init() {
