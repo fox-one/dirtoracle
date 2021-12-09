@@ -7,6 +7,7 @@ import (
 
 type (
 	Config struct {
+		Assets    []*core.Asset  `yaml:"assets"`
 		Dapp      mixin.Keystore `json:"dapp"`
 		Signers   []*core.Signer `json:"signers"`
 		Threshold uint8          `json:"threshold,omitempty"`
