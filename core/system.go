@@ -20,24 +20,31 @@ type (
 	}
 )
 
-func (s *System) SignProposal(p *ProposalRequest, index uint64) (*ProposalResp, error) {
-	payload := p.Payload()
-	sig := s.SignKey.Sign(payload)
-	en256Sig, err := s.En256SignKey.Sign(payload)
-	if err != nil {
-		return nil, err
+func (s *System) SignProposal(p *ProposalRequest, signer *Signer) (*ProposalResp, error) {
+	resp := ProposalResp{
+		TraceID: p.TraceID,
+		Index:   signer.Index,
 	}
 
-	return &ProposalResp{
-		TraceID:        p.TraceID,
-		Index:          index,
-		Signature:      sig,
-		En256Signature: en256Sig,
-	}, nil
+	payload := p.Payload()
+
+	if signer.VerifyKey != nil {
+		resp.Signature = s.SignKey.Sign(payload)
+	}
+
+	if signer.En256VerifyKey != nil {
+		sig, err := s.En256SignKey.Sign(payload)
+		if err != nil {
+			return nil, err
+		}
+		resp.En256Signature = sig
+	}
+
+	return &resp, nil
 }
 
 func (s *System) VerifyData(req *PriceRequest, p *PriceData) bool {
-	{
+	if p.Signature != nil {
 		var pubs []*blst.PublicKey
 		for _, signer := range req.Signers {
 			if p.Signature.Mask&(0x1<<signer.Index) != 0 {
@@ -45,13 +52,9 @@ func (s *System) VerifyData(req *PriceRequest, p *PriceData) bool {
 			}
 		}
 
-		if len(pubs) < int(req.Threshold) ||
-			!blst.AggregatePublicKeys(pubs).Verify(p.Payload(), &p.Signature.Signature) {
-			return false
-		}
-	}
-
-	if p.En256Signature != nil {
+		return len(pubs) >= int(req.Threshold) &&
+			blst.AggregatePublicKeys(pubs).Verify(p.Payload(), &p.Signature.Signature)
+	} else if p.En256Signature != nil {
 		var pubs []*en256.PublicKey
 		for _, signer := range req.Signers {
 			if p.En256Signature.Mask&(0x1<<signer.Index) != 0 {
@@ -59,11 +62,9 @@ func (s *System) VerifyData(req *PriceRequest, p *PriceData) bool {
 			}
 		}
 
-		if len(pubs) < int(req.Threshold) ||
-			!en256.AggregatePublicKeys(pubs).Verify(p.Payload(), &p.En256Signature.Signature) {
-			return false
-		}
+		return len(pubs) >= int(req.Threshold) &&
+			en256.AggregatePublicKeys(pubs).Verify(p.Payload(), &p.En256Signature.Signature)
 	}
 
-	return true
+	return false
 }

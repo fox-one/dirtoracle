@@ -90,8 +90,8 @@ func (m *Oracle) handlePriceRequest(ctx context.Context, subscriber *core.Subscr
 	}
 
 	proposal := core.Proposal{
-		PriceRequest: *req,
-		Signatures:   map[uint64]*blst.Signature{},
+		PriceRequest:    *req,
+		Signatures:      map[uint64]*blst.Signature{},
 		En256Signatures: map[uint64]*en256.Signature{},
 	}
 
@@ -112,7 +112,10 @@ func (m *Oracle) handlePriceRequest(ctx context.Context, subscriber *core.Subscr
 
 		var signer *core.Signer
 		for _, s := range req.Signers {
-			if s.VerifyKey.String() == m.system.VerifyKey.String() {
+			if s.VerifyKey != nil && s.VerifyKey.String() == m.system.VerifyKey.String() {
+				signer = s
+				break
+			} else if s.En256VerifyKey != nil && s.En256VerifyKey.String() == m.system.En256VerifyKey.String() {
 				signer = s
 				break
 			}
@@ -123,7 +126,7 @@ func (m *Oracle) handlePriceRequest(ctx context.Context, subscriber *core.Subscr
 			return nil
 		}
 
-		resp, err := m.system.SignProposal(&proposal.ProposalRequest, signer.Index)
+		resp, err := m.system.SignProposal(&proposal.ProposalRequest, signer)
 		if err != nil {
 			log.WithError(err).Errorln("SignProposal failed")
 			return err

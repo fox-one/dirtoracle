@@ -11,13 +11,13 @@ import (
 )
 
 type (
-	CosiEn256Signature struct {
+	En256CosiSignature struct {
 		en256.Signature
 		Mask uint64
 	}
 )
 
-func (s *CosiEn256Signature) Bytes() []byte {
+func (s *En256CosiSignature) Bytes() []byte {
 	bts, err := mtg.Encode(s.Mask, &s.Signature)
 	if err != nil {
 		panic(err)
@@ -25,8 +25,8 @@ func (s *CosiEn256Signature) Bytes() []byte {
 	return bts
 }
 
-func (s *CosiEn256Signature) FromBytes(bts []byte) error {
-	var sig CosiEn256Signature
+func (s *En256CosiSignature) FromBytes(bts []byte) error {
+	var sig En256CosiSignature
 	_, err := mtg.Scan(bts, &sig.Mask, &sig.Signature)
 	if err != nil {
 		return err
@@ -35,15 +35,15 @@ func (s *CosiEn256Signature) FromBytes(bts []byte) error {
 	return nil
 }
 
-func (s *CosiEn256Signature) String() string {
+func (s *En256CosiSignature) String() string {
 	return base64.StdEncoding.EncodeToString(s.Bytes())
 }
 
-func (s *CosiEn256Signature) MarshalJSON() ([]byte, error) {
+func (s *En256CosiSignature) MarshalJSON() ([]byte, error) {
 	return []byte(strconv.Quote(s.String())), nil
 }
 
-func (s *CosiEn256Signature) UnmarshalJSON(b []byte) error {
+func (s *En256CosiSignature) UnmarshalJSON(b []byte) error {
 	unquoted, err := strconv.Unquote(string(b))
 	if err != nil {
 		return err
@@ -57,16 +57,16 @@ func (s *CosiEn256Signature) UnmarshalJSON(b []byte) error {
 	return s.FromBytes(bts)
 }
 
-func (s *CosiEn256Signature) MarshalBinary() (data []byte, err error) {
+func (s *En256CosiSignature) MarshalBinary() (data []byte, err error) {
 	return s.Bytes(), nil
 }
 
-func (s *CosiEn256Signature) UnmarshalBinary(data []byte) error {
+func (s *En256CosiSignature) UnmarshalBinary(data []byte) error {
 	return s.FromBytes(data)
 }
 
 // Scan implements the sql.Scanner interface for database deserialization.
-func (s *CosiEn256Signature) Scan(value interface{}) error {
+func (s *En256CosiSignature) Scan(value interface{}) error {
 	var d []byte
 	switch v := value.(type) {
 	case string:
@@ -74,7 +74,7 @@ func (s *CosiEn256Signature) Scan(value interface{}) error {
 	case []byte:
 		d = v
 	}
-	var sig CosiEn256Signature
+	var sig En256CosiSignature
 	if err := json.Unmarshal(d, &sig); err != nil {
 		return err
 	}
@@ -83,6 +83,6 @@ func (s *CosiEn256Signature) Scan(value interface{}) error {
 }
 
 // Value implements the driver.Valuer interface for database serialization.
-func (s *CosiEn256Signature) Value() (driver.Value, error) {
+func (s *En256CosiSignature) Value() (driver.Value, error) {
 	return s.MarshalJSON()
 }

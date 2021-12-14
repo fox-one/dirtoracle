@@ -48,7 +48,10 @@ func (m *Oracle) handleProposalMessage(ctx context.Context, msg *mixin.MessageVi
 	// skip if local node is not expected as a signer
 	{
 		for _, s := range p.Signers {
-			if s.VerifyKey.String() == m.system.VerifyKey.String() {
+			if s.VerifyKey != nil && s.VerifyKey.String() == m.system.VerifyKey.String() {
+				s.En256VerifyKey = nil
+				signer = s
+			} else if s.En256VerifyKey != nil && s.En256VerifyKey.String() == m.system.En256VerifyKey.String() {
 				signer = s
 			}
 		}
@@ -81,7 +84,7 @@ func (m *Oracle) handleProposalMessage(ctx context.Context, msg *mixin.MessageVi
 
 	// send proposal response back to the mixin conversation
 	{
-		resp, err := m.system.SignProposal(p, signer.Index)
+		resp, err := m.system.SignProposal(p, signer)
 		if err != nil {
 			log.WithError(err).Errorln("SignProposal failed")
 			return err

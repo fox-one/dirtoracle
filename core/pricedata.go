@@ -1,6 +1,7 @@
 package core
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/fox-one/dirtoracle/pkg/mtg"
@@ -14,7 +15,7 @@ type (
 		AssetID        string              `json:"a,omitempty"`
 		Price          decimal.Decimal     `json:"p,omitempty"`
 		Signature      *CosiSignature      `json:"s,omitempty"`
-		En256Signature *CosiEn256Signature `json:"es,omitempty"`
+		En256Signature *En256CosiSignature `json:"es,omitempty"`
 	}
 )
 
@@ -28,30 +29,40 @@ func (p *PriceData) MarshalBinary() (data []byte, err error) {
 		return nil, err
 	}
 	if p.En256Signature != nil {
-		return mtg.Encode(p.Timestamp, asset, p.Price, p.Signature, p.En256Signature)
+		return mtg.Encode(p.Timestamp, asset, p.Price, p.En256Signature)
+	} else if p.Signature != nil {
+		return mtg.Encode(p.Timestamp, asset, p.Price, p.Signature)
 	}
-	return mtg.Encode(p.Timestamp, asset, p.Price, p.Signature)
+	return nil, errors.New("empty signature")
 }
 
 func (p *PriceData) UnmarshalBinary(data []byte) error {
 	var (
-		timestamp      int64
-		price          decimal.Decimal
-		signature      CosiSignature
-		en256Signature CosiEn256Signature
-		asset          uuid.UUID
+		timestamp int64
+		price     decimal.Decimal
+		asset     uuid.UUID
 	)
-	left, err := mtg.Scan(data, &timestamp, &asset, &price, &signature)
+	left, err := mtg.Scan(data, &timestamp, &asset, &price)
 	if err != nil {
 		return err
 	}
 	p.Timestamp = timestamp
 	p.AssetID = asset.String()
 	p.Price = price
-	p.Signature = &signature
 
-	if _, err := mtg.Scan(left, &en256Signature); err == nil {
-		p.En256Signature = &en256Signature
+	if len(left) == 52 {
+		var signature CosiSignature
+		if _, err := mtg.Scan(left, &signature); err != nil {
+			return err
+		}
+		p.Signature = &signature
+	} else if len(left) == 68 {
+		var signature En256CosiSignature
+		if _, err := mtg.Scan(left, &signature); err != nil {
+			return err
+		}
+		p.En256Signature = &signature
 	}
+
 	return nil
 }

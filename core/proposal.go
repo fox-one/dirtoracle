@@ -35,11 +35,12 @@ type (
 
 func (p Proposal) Export() *PriceData {
 	var (
-		cosi      CosiSignature
-		cosiEn256 *CosiEn256Signature
+		cosi      *CosiSignature
+		cosiEn256 *En256CosiSignature
 	)
 
-	{
+	if len(p.Signatures) >= int(p.Threshold) {
+		cosi = new(CosiSignature)
 		var sigs = make([]*blst.Signature, 0, len(p.Signatures))
 		for id, sig := range p.Signatures {
 			cosi.Mask = cosi.Mask | (1 << id)
@@ -49,7 +50,7 @@ func (p Proposal) Export() *PriceData {
 	}
 
 	if len(p.En256Signatures) >= int(p.Threshold) {
-		cosiEn256 = new(CosiEn256Signature)
+		cosiEn256 = new(En256CosiSignature)
 		var sigs = make([]*en256.Signature, 0, len(p.En256Signatures))
 		for id, sig := range p.En256Signatures {
 			cosiEn256.Mask = cosiEn256.Mask | (1 << id)
@@ -62,7 +63,7 @@ func (p Proposal) Export() *PriceData {
 		AssetID:        p.PriceRequest.AssetID,
 		Timestamp:      p.Timestamp,
 		Price:          p.Price,
-		Signature:      &cosi,
+		Signature:      cosi,
 		En256Signature: cosiEn256,
 	}
 }
@@ -78,15 +79,13 @@ func (p ProposalRequest) Payload() []byte {
 func (p ProposalRequest) Verify(resp *ProposalResp) bool {
 	for _, signer := range p.Signers {
 		if signer.Index == resp.Index {
-			if !signer.VerifyKey.Verify(p.Payload(), resp.Signature) {
-				return false
+			if resp.Signature != nil {
+				return signer.VerifyKey.Verify(p.Payload(), resp.Signature)
 			}
 			if signer.En256VerifyKey != nil && resp.En256Signature != nil {
-				if !signer.En256VerifyKey.Verify(p.Payload(), resp.En256Signature) {
-					return false
-				}
+				return signer.En256VerifyKey.Verify(p.Payload(), resp.En256Signature)
 			}
-			return true
+			return false
 		}
 	}
 	return false

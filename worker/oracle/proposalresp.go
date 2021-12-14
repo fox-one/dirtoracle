@@ -28,7 +28,7 @@ func (m *Oracle) handleProposalRespMessage(ctx context.Context, msg *mixin.Messa
 		return nil
 	}
 
-	if len(p.Signatures) == int(p.Threshold) {
+	if len(p.Signatures) == int(p.Threshold) || len(p.En256Signatures) == int(p.Threshold) {
 		log.Infoln("ignored:", "Proposal already passed")
 		return nil
 	}
@@ -38,11 +38,13 @@ func (m *Oracle) handleProposalRespMessage(ctx context.Context, msg *mixin.Messa
 		return nil
 	}
 
-	p.Signatures[resp.Index] = resp.Signature
+	if resp.Signature != nil {
+		p.Signatures[resp.Index] = resp.Signature
+	}
 	if resp.En256Signature != nil {
 		p.En256Signatures[resp.Index] = resp.En256Signature
 	}
-	if len(p.Signatures) == int(p.Threshold) {
+	if len(p.Signatures) == int(p.Threshold) || len(p.En256Signatures) == int(p.Threshold) {
 		// create a final transaction to the receiver
 		if err := m.sendPriceData(ctx, msg, p); err != nil {
 			return err
