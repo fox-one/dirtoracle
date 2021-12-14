@@ -29,6 +29,8 @@ func provideSystem() *core.System {
 		ConversationID: cfg.Group.ConversationID,
 		SignKey:        cfg.Group.SignKey,
 		VerifyKey:      cfg.Group.SignKey.PublicKey(),
+		En256SignKey:   cfg.Group.En256SignKey,
+		En256VerifyKey: cfg.Group.En256SignKey.PublicKey(),
 		GasAsset:       cfg.Gas.Asset,
 		GasAmount:      cfg.Gas.Amount,
 	}

@@ -14,7 +14,7 @@ require (
 	github.com/gofrs/uuid v4.2.0+incompatible
 	github.com/lib/pq v1.10.4
 	github.com/mitchellh/go-homedir v1.1.0
-	github.com/pandodao/blst v1.0.4
+	github.com/pandodao/blst v1.0.5
 	github.com/patrickmn/go-cache v2.1.0+incompatible
 	github.com/rs/cors v1.8.0
 	github.com/shopspring/decimal v1.3.1

@@ -4,6 +4,7 @@ import (
 	"github.com/fox-one/mixin-sdk-go"
 	"github.com/fox-one/pkg/store/db"
 	"github.com/pandodao/blst"
+	"github.com/pandodao/blst/en256"
 	"github.com/shopspring/decimal"
 )
 
@@ -33,8 +34,9 @@ type (
 
 	Group struct {
 		// 节点用于签名的私钥
-		SignKey        *blst.PrivateKey `json:"sign_key"`
-		ConversationID string           `json:"conversation_id"`
+		SignKey        *blst.PrivateKey  `json:"sign_key"`
+		En256SignKey   *en256.PrivateKey `json:"en256_sign_key"`
+		ConversationID string            `json:"conversation_id"`
 	}
 )
 

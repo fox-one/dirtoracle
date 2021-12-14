@@ -516,6 +516,8 @@ github.com/oxtoacart/bpool v0.0.0-20190530202638-03653db5a59c h1:rp5dCmg/yLR3mgF
 github.com/oxtoacart/bpool v0.0.0-20190530202638-03653db5a59c/go.mod h1:X07ZCGwUbLaax7L0S3Tw4hpejzu63ZrrQiUe6W0hcy0=
 github.com/pandodao/blst v1.0.4 h1:H7S1FgcvRvPsfXDAKr+M+/gNiev1YHK6eb5bS9OnFrU=
 github.com/pandodao/blst v1.0.4/go.mod h1:QnrjRXzbtQtHj8PuqyV1kTaEmeM1yDtH4SrQVF88Eag=
+github.com/pandodao/blst v1.0.5 h1:nl16DC1WhyvpHcaSXTShoaloA+aEjTjbJJr+tX7FbkQ=
+github.com/pandodao/blst v1.0.5/go.mod h1:6N9R1jaRnZvihM43KLg5LMBl+zIZWcQXTc7edhfTaoA=
 github.com/pascaldekloe/goe v0.0.0-20180627143212-57f6aae5913c/go.mod h1:lzWF7FIEvWOWxwDKqyGYQf6ZUaNfKdP144TG7ZOy1lc=
 github.com/pascaldekloe/goe v0.1.0/go.mod h1:lzWF7FIEvWOWxwDKqyGYQf6ZUaNfKdP144TG7ZOy1lc=
 github.com/patrickmn/go-cache v2.1.0+incompatible h1:HRMgzkcYKYpi3C8ajMPV8OFXaaRUnok+kx1WdO15EQc=

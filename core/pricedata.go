@@ -10,10 +10,11 @@ import (
 
 type (
 	PriceData struct {
-		Timestamp int64           `json:"t,omitempty"`
-		AssetID   string          `json:"a,omitempty"`
-		Price     decimal.Decimal `json:"p,omitempty"`
-		Signature *CosiSignature  `json:"s,omitempty"`
+		Timestamp      int64               `json:"t,omitempty"`
+		AssetID        string              `json:"a,omitempty"`
+		Price          decimal.Decimal     `json:"p,omitempty"`
+		Signature      *CosiSignature      `json:"s,omitempty"`
+		En256Signature *CosiEn256Signature `json:"es,omitempty"`
 	}
 )
 
@@ -26,17 +27,21 @@ func (p *PriceData) MarshalBinary() (data []byte, err error) {
 	if err != nil {
 		return nil, err
 	}
+	if p.En256Signature != nil {
+		return mtg.Encode(p.Timestamp, asset, p.Price, p.Signature, p.En256Signature)
+	}
 	return mtg.Encode(p.Timestamp, asset, p.Price, p.Signature)
 }
 
 func (p *PriceData) UnmarshalBinary(data []byte) error {
 	var (
-		timestamp int64
-		price     decimal.Decimal
-		signature CosiSignature
-		asset     uuid.UUID
+		timestamp      int64
+		price          decimal.Decimal
+		signature      CosiSignature
+		en256Signature CosiEn256Signature
+		asset          uuid.UUID
 	)
-	_, err := mtg.Scan(data, &timestamp, &asset, &price, &signature)
+	left, err := mtg.Scan(data, &timestamp, &asset, &price, &signature)
 	if err != nil {
 		return err
 	}
@@ -44,5 +49,9 @@ func (p *PriceData) UnmarshalBinary(data []byte) error {
 	p.AssetID = asset.String()
 	p.Price = price
 	p.Signature = &signature
+
+	if _, err := mtg.Scan(left, &en256Signature); err == nil {
+		p.En256Signature = &en256Signature
+	}
 	return nil
 }

@@ -2,12 +2,14 @@ package core
 
 import (
 	"github.com/pandodao/blst"
+	"github.com/pandodao/blst/en256"
 )
 
 type (
 	Signer struct {
-		Index     uint64          `json:"index,omitempty"`
-		VerifyKey *blst.PublicKey `json:"verify_key,omitempty"`
+		Index          uint64           `json:"index,omitempty"`
+		VerifyKey      *blst.PublicKey  `json:"verify_key,omitempty"`
+		En256VerifyKey *en256.PublicKey `json:"en256_verify_key,omitempty"`
 	}
 
 	Receiver struct {

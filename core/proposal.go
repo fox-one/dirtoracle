@@ -2,6 +2,7 @@ package core
 
 import (
 	"github.com/pandodao/blst"
+	"github.com/pandodao/blst/en256"
 	"github.com/shopspring/decimal"
 )
 
@@ -10,7 +11,8 @@ type (
 		PriceRequest
 		ProposalRequest `json:"-"`
 
-		Signatures map[uint64]*blst.Signature `json:"sigs,omitempty"`
+		Signatures      map[uint64]*blst.Signature  `json:"sigs,omitempty"`
+		En256Signatures map[uint64]*en256.Signature `json:"en256_sigs,omitempty"`
 	}
 
 	ProposalRequest struct {
@@ -24,28 +26,43 @@ type (
 	}
 
 	ProposalResp struct {
-		TraceID   string          `json:"trace_id,omitempty"`
-		Index     uint64          `json:"index"`
-		Signature *blst.Signature `json:"signature,omitempty"`
+		TraceID        string           `json:"trace_id,omitempty"`
+		Index          uint64           `json:"index"`
+		Signature      *blst.Signature  `json:"signature,omitempty"`
+		En256Signature *en256.Signature `json:"en256_signature,omitempty"`
 	}
 )
 
 func (p Proposal) Export() *PriceData {
 	var (
-		cosi CosiSignature
-		sigs = make([]*blst.Signature, 0, len(p.Signatures))
+		cosi      CosiSignature
+		cosiEn256 CosiEn256Signature
 	)
-	for id, sig := range p.Signatures {
-		cosi.Mask = cosi.Mask | (1 << id)
-		sigs = append(sigs, sig)
+
+	{
+		var sigs = make([]*blst.Signature, 0, len(p.Signatures))
+		for id, sig := range p.Signatures {
+			cosi.Mask = cosi.Mask | (1 << id)
+			sigs = append(sigs, sig)
+		}
+		cosi.Signature = *blst.AggregateSignatures(sigs)
 	}
-	cosi.Signature = *blst.AggregateSignatures(sigs)
+
+	{
+		var sigs = make([]*en256.Signature, 0, len(p.En256Signatures))
+		for id, sig := range p.En256Signatures {
+			cosiEn256.Mask = cosiEn256.Mask | (1 << id)
+			sigs = append(sigs, sig)
+		}
+		cosiEn256.Signature = *en256.AggregateSignatures(sigs)
+	}
 
 	return &PriceData{
-		AssetID:   p.PriceRequest.AssetID,
-		Timestamp: p.Timestamp,
-		Price:     p.Price,
-		Signature: &cosi,
+		AssetID:        p.PriceRequest.AssetID,
+		Timestamp:      p.Timestamp,
+		Price:          p.Price,
+		Signature:      &cosi,
+		En256Signature: &cosiEn256,
 	}
 }
 

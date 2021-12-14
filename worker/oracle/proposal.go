@@ -81,7 +81,13 @@ func (m *Oracle) handleProposalMessage(ctx context.Context, msg *mixin.MessageVi
 
 	// send proposal response back to the mixin conversation
 	{
-		bts, _ := json.MarshalIndent(m.system.SignProposal(p, signer.Index), "", "    ")
+		resp, err := m.system.SignProposal(p, signer.Index)
+		if err != nil {
+			log.WithError(err).Errorln("SignProposal failed")
+			return err
+		}
+
+		bts, _ := json.MarshalIndent(resp, "", "    ")
 		reply := &mixin.MessageRequest{
 			ConversationID: msg.ConversationID,
 			QuoteMessageID: msg.MessageID,

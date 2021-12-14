@@ -121,7 +121,12 @@ func (m *Oracle) handlePriceRequest(ctx context.Context, subscriber *core.Subscr
 			return nil
 		}
 
-		resp := m.system.SignProposal(&proposal.ProposalRequest, signer.Index)
+		resp, err := m.system.SignProposal(&proposal.ProposalRequest, signer.Index)
+		if err != nil {
+			log.WithError(err).Errorln("SignProposal failed")
+			return err
+		}
+
 		proposal.ProposalRequest.Signature = resp
 		proposal.Signatures[signer.Index] = resp.Signature
 
