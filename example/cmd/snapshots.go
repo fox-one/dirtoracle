@@ -9,18 +9,32 @@ import (
 
 	"github.com/fox-one/dirtoracle/core"
 	"github.com/pandodao/blst"
+	"github.com/pandodao/blst/en256"
 )
 
 func VerifyData(p *core.PriceData, signers []*core.Signer, threshold int) bool {
-	var pubs []*blst.PublicKey
-	for _, signer := range signers {
-		if p.Signature.Mask&(0x1<<signer.Index) != 0 {
-			pubs = append(pubs, signer.VerifyKey)
+	if p.Signature != nil {
+		var pubs []*blst.PublicKey
+		for _, signer := range signers {
+			if p.Signature.Mask&(0x1<<signer.Index) != 0 {
+				pubs = append(pubs, signer.VerifyKey)
+			}
 		}
-	}
 
-	return len(pubs) >= threshold &&
-		blst.AggregatePublicKeys(pubs).Verify(p.Payload(), &p.Signature.Signature)
+		return len(pubs) >= threshold &&
+			blst.AggregatePublicKeys(pubs).Verify(p.Payload(), &p.Signature.Signature)
+	} else if p.En256Signature != nil {
+		var pubs []*en256.PublicKey
+		for _, signer := range signers {
+			if p.Signature.Mask&(0x1<<signer.Index) != 0 {
+				pubs = append(pubs, signer.En256VerifyKey)
+			}
+		}
+
+		return len(pubs) >= threshold &&
+			en256.AggregatePublicKeys(pubs).Verify(p.Payload(), &p.En256Signature.Signature)
+	}
+	return false
 }
 
 func loopSnapshots(ctx context.Context) {
