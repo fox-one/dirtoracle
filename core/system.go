@@ -21,7 +21,9 @@ type (
 )
 
 func (s *System) SignProposal(p *ProposalRequest, index uint64) (*ProposalResp, error) {
-	en256Sig, err := s.En256SignKey.Sign(p.Payload())
+	payload := p.Payload()
+	sig := s.SignKey.Sign(payload)
+	en256Sig, err := s.En256SignKey.Sign(payload)
 	if err != nil {
 		return nil, err
 	}
@@ -29,7 +31,7 @@ func (s *System) SignProposal(p *ProposalRequest, index uint64) (*ProposalResp, 
 	return &ProposalResp{
 		TraceID:        p.TraceID,
 		Index:          index,
-		Signature:      s.SignKey.Sign(p.Payload()),
+		Signature:      sig,
 		En256Signature: en256Sig,
 	}, nil
 }
@@ -52,7 +54,7 @@ func (s *System) VerifyData(req *PriceRequest, p *PriceData) bool {
 	if p.En256Signature != nil {
 		var pubs []*en256.PublicKey
 		for _, signer := range req.Signers {
-			if p.Signature.Mask&(0x1<<signer.Index) != 0 {
+			if p.En256Signature.Mask&(0x1<<signer.Index) != 0 {
 				pubs = append(pubs, signer.En256VerifyKey)
 			}
 		}

@@ -12,6 +12,7 @@ import (
 	"github.com/fox-one/pkg/logger"
 	"github.com/fox-one/pkg/uuid"
 	"github.com/pandodao/blst"
+	"github.com/pandodao/blst/en256"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/sync/errgroup"
 )
@@ -91,6 +92,7 @@ func (m *Oracle) handlePriceRequest(ctx context.Context, subscriber *core.Subscr
 	proposal := core.Proposal{
 		PriceRequest: *req,
 		Signatures:   map[uint64]*blst.Signature{},
+		En256Signatures: map[uint64]*en256.Signature{},
 	}
 
 	// make Proposal
@@ -129,6 +131,7 @@ func (m *Oracle) handlePriceRequest(ctx context.Context, subscriber *core.Subscr
 
 		proposal.ProposalRequest.Signature = resp
 		proposal.Signatures[signer.Index] = resp.Signature
+		proposal.En256Signatures[signer.Index] = resp.En256Signature
 
 		log = logger.FromContext(ctx).WithField("price", price)
 		ctx = logger.WithContext(ctx, log)

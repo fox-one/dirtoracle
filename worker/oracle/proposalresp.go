@@ -39,6 +39,9 @@ func (m *Oracle) handleProposalRespMessage(ctx context.Context, msg *mixin.Messa
 	}
 
 	p.Signatures[resp.Index] = resp.Signature
+	if resp.En256Signature != nil {
+		p.En256Signatures[resp.Index] = resp.En256Signature
+	}
 	if len(p.Signatures) == int(p.Threshold) {
 		// create a final transaction to the receiver
 		if err := m.sendPriceData(ctx, msg, p); err != nil {

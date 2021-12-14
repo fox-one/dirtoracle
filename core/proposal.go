@@ -36,7 +36,7 @@ type (
 func (p Proposal) Export() *PriceData {
 	var (
 		cosi      CosiSignature
-		cosiEn256 CosiEn256Signature
+		cosiEn256 *CosiEn256Signature
 	)
 
 	{
@@ -48,7 +48,8 @@ func (p Proposal) Export() *PriceData {
 		cosi.Signature = *blst.AggregateSignatures(sigs)
 	}
 
-	{
+	if len(p.En256Signatures) >= int(p.Threshold) {
+		cosiEn256 = new(CosiEn256Signature)
 		var sigs = make([]*en256.Signature, 0, len(p.En256Signatures))
 		for id, sig := range p.En256Signatures {
 			cosiEn256.Mask = cosiEn256.Mask | (1 << id)
@@ -62,7 +63,7 @@ func (p Proposal) Export() *PriceData {
 		Timestamp:      p.Timestamp,
 		Price:          p.Price,
 		Signature:      &cosi,
-		En256Signature: &cosiEn256,
+		En256Signature: cosiEn256,
 	}
 }
 
@@ -77,7 +78,15 @@ func (p ProposalRequest) Payload() []byte {
 func (p ProposalRequest) Verify(resp *ProposalResp) bool {
 	for _, signer := range p.Signers {
 		if signer.Index == resp.Index {
-			return signer.VerifyKey.Verify(p.Payload(), resp.Signature)
+			if !signer.VerifyKey.Verify(p.Payload(), resp.Signature) {
+				return false
+			}
+			if signer.En256VerifyKey != nil && resp.En256Signature != nil {
+				if !signer.En256VerifyKey.Verify(p.Payload(), resp.En256Signature) {
+					return false
+				}
+			}
+			return true
 		}
 	}
 	return false
