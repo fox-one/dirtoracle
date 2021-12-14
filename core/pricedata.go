@@ -46,9 +46,6 @@ func (p *PriceData) UnmarshalBinary(data []byte) error {
 	if err != nil {
 		return err
 	}
-	p.Timestamp = timestamp
-	p.AssetID = asset.String()
-	p.Price = price
 
 	if len(left) == 52 {
 		var signature CosiSignature
@@ -62,7 +59,12 @@ func (p *PriceData) UnmarshalBinary(data []byte) error {
 			return err
 		}
 		p.En256Signature = &signature
+	} else {
+		return errors.New("unknown signature")
 	}
+	p.Timestamp = timestamp
+	p.AssetID = asset.String()
+	p.Price = price
 
 	return nil
 }

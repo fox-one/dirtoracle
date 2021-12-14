@@ -26,7 +26,7 @@ func VerifyData(p *core.PriceData, signers []*core.Signer, threshold int) bool {
 	} else if p.En256Signature != nil {
 		var pubs []*en256.PublicKey
 		for _, signer := range signers {
-			if p.Signature.Mask&(0x1<<signer.Index) != 0 {
+			if p.En256Signature.Mask&(0x1<<signer.Index) != 0 {
 				pubs = append(pubs, signer.En256VerifyKey)
 			}
 		}
