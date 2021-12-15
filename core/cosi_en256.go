@@ -4,7 +4,6 @@ import (
 	"database/sql/driver"
 	"encoding/base64"
 	"encoding/json"
-	"errors"
 	"strconv"
 
 	"github.com/fox-one/dirtoracle/pkg/mtg"
@@ -27,20 +26,15 @@ func (s *En256CosiSignature) Bytes() []byte {
 }
 
 func (s *En256CosiSignature) FromBytes(bts []byte) error {
-	var mask uint64
-	left, err := mtg.Scan(bts, &mask)
-	if err != nil {
+	var (
+		mask uint64
+		sig  en256.Signature
+	)
+
+	if _, err := mtg.Scan(bts, &mask, &sig); err != nil {
 		return err
 	}
 
-	if len(left) < 65 || left[0] != 64 {
-		return errors.New("empty signature")
-	}
-
-	var sig en256.Signature
-	if err := sig.FromBytes(left[1:65]); err != nil {
-		return err
-	}
 	s.Mask, s.Signature = mask, sig
 	return nil
 }
