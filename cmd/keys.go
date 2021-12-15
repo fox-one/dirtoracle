@@ -18,9 +18,11 @@ package cmd
 import (
 	"crypto/ed25519"
 	"encoding/base64"
+	"encoding/hex"
 
 	"github.com/fox-one/mixin-sdk-go"
 	"github.com/pandodao/blst"
+	"github.com/pandodao/blst/en256"
 	"github.com/spf13/cobra"
 )
 
@@ -37,6 +39,14 @@ var keysCmd = &cobra.Command{
 			public := private.PublicKey()
 			cmd.Println("Private", private)
 			cmd.Println("Public ", public)
+
+		case "en256":
+			private := en256.GenerateKey()
+			public := private.PublicKey()
+			cmd.Println("Private", private)
+
+			bts, _ := public.Bytes()
+			cmd.Println("Public ", hex.EncodeToString(bts))
 
 		case "ed25519", "ed":
 			private := mixin.GenerateEd25519Key()
