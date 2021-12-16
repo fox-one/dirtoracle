@@ -26,18 +26,20 @@ func (s *System) SignProposal(p *ProposalRequest, signer *Signer) (*ProposalResp
 		Index:   signer.Index,
 	}
 
-	payload := p.Payload()
-
 	if signer.VerifyKey != nil {
-		resp.Signature = s.SignKey.Sign(payload)
+		resp.Signature = s.SignKey.Sign(p.Payload())
 	}
 
 	if signer.En256VerifyKey != nil {
-		sig, err := s.En256SignKey.Sign(payload)
-		if err != nil {
+		if payload, err := p.PayloadV1(); err == nil {
+			sig, err := s.En256SignKey.Sign(payload)
+			if err != nil {
+				return nil, err
+			}
+			resp.En256Signature = sig
+		} else {
 			return nil, err
 		}
-		resp.En256Signature = sig
 	}
 
 	return &resp, nil
@@ -62,8 +64,10 @@ func (s *System) VerifyData(req *PriceRequest, p *PriceData) bool {
 			}
 		}
 
+		payload, err := p.PayloadV1()
 		return len(pubs) >= int(req.Threshold) &&
-			en256.AggregatePublicKeys(pubs).Verify(p.Payload(), &p.En256Signature.Signature)
+			err == nil &&
+			en256.AggregatePublicKeys(pubs).Verify(payload, &p.En256Signature.Signature)
 	}
 
 	return false

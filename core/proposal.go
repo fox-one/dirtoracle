@@ -76,6 +76,14 @@ func (p ProposalRequest) Payload() []byte {
 	}.Payload()
 }
 
+func (p ProposalRequest) PayloadV1() ([]byte, error) {
+	return PriceData{
+		Timestamp: p.Timestamp,
+		AssetID:   p.AssetID,
+		Price:     p.Price,
+	}.PayloadV1()
+}
+
 func (p ProposalRequest) Verify(resp *ProposalResp) bool {
 	for _, signer := range p.Signers {
 		if signer.Index == resp.Index {
@@ -83,7 +91,9 @@ func (p ProposalRequest) Verify(resp *ProposalResp) bool {
 				return signer.VerifyKey.Verify(p.Payload(), resp.Signature)
 			}
 			if signer.En256VerifyKey != nil && resp.En256Signature != nil {
-				return signer.En256VerifyKey.Verify(p.Payload(), resp.En256Signature)
+				if payload, err := p.PayloadV1(); err == nil {
+					return signer.En256VerifyKey.Verify(payload, resp.En256Signature)
+				}
 			}
 			return false
 		}

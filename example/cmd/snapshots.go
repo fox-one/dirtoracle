@@ -31,8 +31,10 @@ func VerifyData(p *core.PriceData, signers []*core.Signer, threshold int) bool {
 			}
 		}
 
+		payload, err := p.PayloadV1()
 		return len(pubs) >= threshold &&
-			en256.AggregatePublicKeys(pubs).Verify(p.Payload(), &p.En256Signature.Signature)
+			err == nil &&
+			en256.AggregatePublicKeys(pubs).Verify(payload, &p.En256Signature.Signature)
 	}
 	return false
 }

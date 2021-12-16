@@ -23,6 +23,15 @@ func (p PriceData) Payload() []byte {
 	return []byte(fmt.Sprintf("%d:%s:%v", p.Timestamp, p.AssetID, p.Price))
 }
 
+func (p PriceData) PayloadV1() ([]byte, error) {
+	asset, err := uuid.FromString(p.AssetID)
+	if err != nil {
+		return nil, err
+	}
+
+	return mtg.Encode(p.Timestamp, asset, p.Price)
+}
+
 func (p *PriceData) MarshalBinary() (data []byte, err error) {
 	asset, err := uuid.FromString(p.AssetID)
 	if err != nil {
