@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 
-	"github.com/fox-one/dirtoracle/example/cmd"
+	"github.com/fox-one/dirtoracle/apps/mvm/cmd"
 )
 
 var (

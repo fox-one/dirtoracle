@@ -3,14 +3,12 @@ pragma solidity >=0.8.4 <0.9.0;
 
 import {BytesLib} from "./bytes.sol";
 import {BLS} from "./bls.sol";
-import {Base64} from "./base64.sol";
 import {BN256G2} from "./bn256g2.sol";
 
 contract MixinProcess {
     using BytesLib for bytes;
     using BLS for uint256[2];
     using BLS for bytes;
-    using Base64 for string;
     using BN256G2 for uint256;
 
     struct Decimal {
@@ -24,14 +22,7 @@ contract MixinProcess {
         Decimal price;
     }
 
-    event MixinEvent(
-        address indexed sender,
-        uint256 nonce,
-        uint128 asset,
-        uint256 amount,
-        uint64 timestamp,
-        bytes extra
-    );
+    event PriceEvent(uint128 asset, uint64 timestamp, PriceData price);
 
     uint256 BLS_P =
         21888242871839275222246405745257275088696311157297823662689037894645226208583;
@@ -39,14 +30,6 @@ contract MixinProcess {
         21888242871839275222246405745257275088696311157297823662689037894645226208583;
 
     uint64 GENESIS_TS = 1639500000;
-
-    uint256[4] public GROUP = [
-        0x2f741961cea2e88cfa2680eeaac040d41f41f3fedb01e38c06f4c6058fd7e425, // x.y
-        0x007d68aef83f9690b04f463e13eadd9b18f4869041f1b67e7f1a30c9d1d2c42c, // x.x
-        0x2a32fa1736807486256ad8dc6a8740dfb91917cf8d15848133819275be92b673, // y.y
-        0x257ad901f02f8a442ccf4f1b1d0d7d3a8e8fe791102706e575d36de1c2a4a40f // y.x
-    ];
-
     uint32 public THRESHOLD = 4;
     uint256[4][] public ORACLE_GROUP = [
         [
@@ -95,11 +78,10 @@ contract MixinProcess {
 
     mapping(uint128 => PriceData) public prices;
 
-    function work(bytes memory extra) internal returns (bool) {
-        bytes memory data = string(extra).decode();
+    function work(bytes memory data) internal returns (bool) {
         uint256 offset = 0;
 
-        require(data.length >= 65, "memo data too small");
+        require(data.length >= 65 || data.length <= 162, "memo data too small");
 
         uint8 tssize = data.toUint8(offset);
         require(tssize < 8, "invalid timestamp size");
@@ -118,7 +100,7 @@ contract MixinProcess {
         offset += 16;
 
         require(
-            prices[asset].timestamp <= 0 || prices[asset].timestamp < timestamp,
+            prices[asset].timestamp < timestamp,
             "timestamp older than last price"
         );
 
@@ -137,7 +119,8 @@ contract MixinProcess {
 
         uint256[2] memory message = data.slice(0, offset).hashToPoint();
 
-        require(data.toUint8(offset) == 36, "invalid cosi-signature");
+        uint8 cosisize = data.toUint8(offset);
+        require(cosisize == 36 || cosisize == 97, "invalid cosi-signature");
         offset += 1;
 
         require(data.toUint8(offset) == 1, "invalid signature mask size");
@@ -159,13 +142,15 @@ contract MixinProcess {
             sig[1] = data.toUint256(offset + 32);
             offset += 32;
         } else {
-            sig[1] = decompresSignature(sig[0], data.toUint8(offset));
+            uint8 sigMask = data.toUint8(offset);
+            sig[1] = decompresSignature(sig[0], sigMask);
             offset += 1;
         }
 
         require(sig.verifySingle(pubkey, message), "invalid price signature");
 
         prices[asset] = price;
+        emit PriceEvent(asset, timestamp, price);
         return true;
     }
 
@@ -174,55 +159,15 @@ contract MixinProcess {
         require(raw.length >= 141, "event data too small");
 
         uint256 size = 0;
-        uint256 offset = 0;
-        offset = offset + 16;
-
-        uint64 nonce = raw.toUint64(offset);
-        offset = offset + 8;
-
-        uint128 asset = raw.toUint128(offset);
-        offset = offset + 16;
-
+        uint256 offset = 40;
         size = raw.toUint16(offset);
-        offset = offset + 2;
         require(size <= 32, "integer out of bounds");
-        uint256 amount = new bytes(32 - size)
-            .concat(raw.slice(offset, size))
-            .toUint256(0);
-        offset = offset + size;
+        offset = offset + 2 + size;
 
         size = raw.toUint16(offset);
         offset = offset + 2;
         bytes memory extra = raw.slice(offset, size);
-        offset = offset + size;
-
-        uint64 timestamp = raw.toUint64(offset);
-        offset = offset + 8;
-
-        size = raw.toUint16(offset);
-        size = 2 + size * 16 + 2;
-        bytes memory sender = raw.slice(offset, size);
-        offset = offset + size;
-
-        offset = offset + 2;
-        require(verifySignature(raw, offset), "invalid signature");
-
-        offset = offset + 64;
-        require(raw.length == offset, "malformed event encoding");
-
-        if (!work(extra)) {
-            return false;
-        }
-
-        emit MixinEvent(
-            mixinSenderToAddress(sender),
-            nonce,
-            asset,
-            amount,
-            timestamp,
-            extra
-        );
-        return true;
+        return work(extra);
     }
 
     function getPrice(uint128 asset) public view returns (PriceData memory) {
@@ -235,22 +180,6 @@ contract MixinProcess {
         returns (address)
     {
         return address(uint160(uint256(keccak256(sender))));
-    }
-
-    function verifySignature(bytes memory raw, uint256 offset)
-        internal
-        view
-        returns (bool)
-    {
-        uint256[2] memory sig = [
-            raw.toUint256(offset),
-            raw.toUint256(offset + 32)
-        ];
-        uint256[2] memory message = raw
-            .slice(0, offset - 2)
-            .concat(new bytes(2))
-            .hashToPoint();
-        return sig.verifySingle(GROUP, message);
     }
 
     function decompresSignature(uint256 x, uint8 m)

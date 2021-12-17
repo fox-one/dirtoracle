@@ -4,19 +4,22 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strconv"
 	"time"
 
-	"github.com/fox-one/dirtoracle/core"
-	"github.com/fox-one/dirtoracle/example/config"
+	"github.com/fox-one/dirtoracle/apps/mvm/core"
 	"github.com/fox-one/pkg/uuid"
 	"github.com/go-chi/chi"
 	"github.com/go-chi/chi/middleware"
 )
 
-func Handle(cfg *config.Config) http.Handler {
+func Handle(
+	system core.System,
+	assets core.AssetStore,
+) http.Handler {
 	r := chi.NewRouter()
 	r.Use(middleware.NoCache)
-	r.Handle("/", handle(cfg))
+	r.Handle("/", handle(system, assets))
 	return r
 }
 
@@ -28,19 +31,47 @@ func JSON(w http.ResponseWriter, v interface{}) {
 	_ = enc.Encode(map[string]interface{}{"data": v})
 }
 
-func handle(cfg *config.Config) http.HandlerFunc {
+func Error(w http.ResponseWriter, err error) {
+	statusCode := http.StatusInternalServerError
+	respBody := "internal server error"
+
+	w.Header().Set("Content-Type", "application/json") // Error responses are always JSON
+	w.Header().Set("Content-Length", strconv.Itoa(len(respBody)))
+	w.WriteHeader(statusCode) // set HTTP status code and send response
+
+	w.Write([]byte(respBody))
+}
+
+func handle(
+	system core.System,
+	assets core.AssetStore,
+) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var requests []*core.PriceRequest
-		for _, asset := range cfg.Assets {
+		assets, err := assets.List(r.Context())
+		if err != nil {
+			Error(w, err)
+			return
+		}
+
+		var requests = make([]*core.PriceRequest, 0, len(assets))
+		for _, asset := range assets {
+			if time.Since(*asset.PriceUpdatedAt) < time.Duration(asset.PriceDuration)*time.Second {
+				continue
+			}
+
+			trace := uuid.Modify(asset.AssetID, fmt.Sprintf("price-request:%s:%d", system.ClientID, time.Now().Unix()/asset.PriceDuration))
 			requests = append(requests, &core.PriceRequest{
-				TraceID: uuid.Modify(asset.AssetID, fmt.Sprintf("price-request:%s:%d", cfg.Dapp.ClientID, time.Now().Unix()/60)),
-				Asset:   *asset,
+				TraceID: trace,
+				Asset: core.Asset{
+					AssetID: asset.AssetID,
+					Symbol:  asset.Symbol,
+				},
 				Receiver: &core.Receiver{
 					Threshold: 1,
-					Members:   []string{cfg.Dapp.ClientID},
+					Members:   []string{system.ClientID},
 				},
-				Signers:   cfg.Signers,
-				Threshold: cfg.Threshold,
+				Signers:   system.Signers,
+				Threshold: system.SignerThreshold,
 			})
 		}
 		JSON(w, requests)

@@ -20,7 +20,7 @@ import (
 	"os"
 	"path"
 
-	"github.com/fox-one/dirtoracle/example/config"
+	"github.com/fox-one/dirtoracle/apps/mvm/config"
 	homedir "github.com/mitchellh/go-homedir"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"

@@ -20,7 +20,7 @@ import (
 	"fmt"
 	"net/http"
 
-	scanner "github.com/fox-one/dirtoracle/example/handler/pricescanner"
+	scanner "github.com/fox-one/dirtoracle/apps/mvm/handler/pricescanner"
 	"github.com/fox-one/dirtoracle/handler/hc"
 	"github.com/fox-one/pkg/logger"
 	"github.com/go-chi/chi"
@@ -34,8 +34,11 @@ var serverCmd = &cobra.Command{
 	Use:   "server",
 	Short: "run dirtoracle example server",
 	Run: func(cmd *cobra.Command, args []string) {
-		ctx := cmd.Context()
-		go loopSnapshots(ctx)
+		database := provideDatabase()
+		defer database.Close()
+
+		system := provideSystem()
+		assets := provideAssetStore(database)
 
 		mux := chi.NewMux()
 		mux.Use(middleware.Recoverer)
@@ -45,7 +48,10 @@ var serverCmd = &cobra.Command{
 		mux.Use(middleware.Logger)
 
 		// hc
-		mux.Mount("/price-requests", scanner.Handle(&cfg))
+		mux.Mount("/price-requests", scanner.Handle(
+			*system,
+			assets,
+		))
 		mux.Mount("/hc", hc.Handle(rootCmd.Version))
 
 		// launch server
