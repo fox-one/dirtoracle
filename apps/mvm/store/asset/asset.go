@@ -29,6 +29,18 @@ type assetStore struct {
 	db *db.DB
 }
 
+func (s *assetStore) Create(ctx context.Context, assets []*core.Asset) error {
+	return s.db.Tx(func(tx *db.DB) error {
+		for _, asset := range assets {
+			if err := tx.Update().Where("asset_id = ?", asset.AssetID).FirstOrCreate(asset).Error; err != nil {
+				return err
+			}
+		}
+
+		return nil
+	})
+}
+
 func (s *assetStore) List(ctx context.Context) ([]*core.Asset, error) {
 	var assets []*core.Asset
 	if err := s.db.View().Find(&assets).Error; err != nil {

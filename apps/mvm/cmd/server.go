@@ -29,7 +29,7 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// workerCmd represents the server command
+// serverCmd represents the server command
 var serverCmd = &cobra.Command{
 	Use:   "server",
 	Short: "run dirtoracle example server",

@@ -18,6 +18,7 @@ type (
 	}
 
 	AssetStore interface {
+		Create(ctx context.Context, assets []*Asset) error
 		List(ctx context.Context) ([]*Asset, error)
 		Find(ctx context.Context, assetID string) (*Asset, error)
 		Update(ctx context.Context, asset *Asset) error
