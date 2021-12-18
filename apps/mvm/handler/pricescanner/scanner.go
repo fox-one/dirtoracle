@@ -55,7 +55,7 @@ func handle(
 
 		var requests = make([]*core.PriceRequest, 0, len(assets))
 		for _, asset := range assets {
-			if time.Since(*asset.PriceUpdatedAt) < time.Duration(asset.PriceDuration)*time.Second {
+			if asset.PriceUpdatedAt != nil && time.Since(*asset.PriceUpdatedAt) < time.Duration(asset.PriceDuration)*time.Second {
 				continue
 			}
 
