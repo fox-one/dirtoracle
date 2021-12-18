@@ -14,6 +14,15 @@ const (
 	PairStatusOnline = "online"
 )
 
+const (
+	currencyPerp = "PERP"
+)
+
+const (
+	PairTypeSpot   = "spot"
+	PairTypeFuture = "future"
+)
+
 type (
 	PairStatus string
 
@@ -29,6 +38,7 @@ type (
 		Type          string  `json:"type,omitempty"`
 		BaseCurrency  string  `json:"baseCurrency,omitempty"`
 		QuoteCurrency string  `json:"quoteCurrency,omitempty"`
+		Underlying    string  `json:"underlying,omitempty"`
 	}
 
 	Pairs []*Pair
@@ -44,11 +54,20 @@ func (pairs Pairs) export() []*route.Pair {
 		if !pair.IsOnline() {
 			continue
 		}
-		items = append(items, &route.Pair{
-			Symbol: pair.Name,
-			Base:   pair.BaseCurrency,
-			Quote:  pair.QuoteCurrency,
-		})
+		switch pair.Type {
+		case PairTypeSpot:
+			items = append(items, &route.Pair{
+				Symbol: pair.Name,
+				Base:   pair.BaseCurrency,
+				Quote:  pair.QuoteCurrency,
+			})
+		case PairTypeFuture:
+			items = append(items, &route.Pair{
+				Symbol: pair.Name,
+				Base:   pair.Underlying,
+				Quote:  currencyPerp,
+			})
+		}
 	}
 	return items
 }
