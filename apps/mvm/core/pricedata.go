@@ -62,7 +62,7 @@ func (p *PriceData) UnmarshalBinary(data []byte) error {
 			return err
 		}
 		p.Signature = &signature
-	} else if len(left) == 37 {
+	} else if len(left) == 37 || len(left) == 68 {
 		var signature En256CosiSignature
 		if _, err := mtg.Scan(left, &signature); err != nil {
 			return err

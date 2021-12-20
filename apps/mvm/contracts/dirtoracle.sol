@@ -7,8 +7,10 @@ import {BN256G2} from "./bn256g2.sol";
 
 contract MixinProcess {
     using BytesLib for bytes;
+    using BLS for uint256[4];
     using BLS for uint256[2];
     using BLS for bytes;
+    using BLS for uint256;
     using BN256G2 for uint256;
 
     struct Decimal {
@@ -23,11 +25,6 @@ contract MixinProcess {
     }
 
     event PriceEvent(uint128 asset, uint64 timestamp, PriceData price);
-
-    uint256 BLS_P =
-        21888242871839275222246405745257275088696311157297823662689037894645226208583;
-    uint256 constant BLS_N =
-        21888242871839275222246405745257275088696311157297823662689037894645226208583;
 
     uint64 GENESIS_TS = 1639500000;
     uint32 public THRESHOLD = 4;
@@ -81,17 +78,19 @@ contract MixinProcess {
     function work(bytes memory data) internal returns (bool) {
         uint256 offset = 0;
 
-        require(data.length >= 65 || data.length <= 162, "memo data too small");
+        require(
+            data.length >= 65 || data.length <= 162,
+            "invalid extra length"
+        );
 
-        uint8 tssize = data.toUint8(offset);
-        require(tssize < 8, "invalid timestamp size");
+        uint8 size = data.toUint8(offset);
+        require(size < 8, "invalid timestamp size");
         offset += 1;
 
-        uint64 timestamp = new bytes(8 - tssize)
-            .concat(data.slice(offset, tssize))
-            .toUint64(0);
+        uint64 timestamp = uint64(toInt64(data, offset, size));
+
         require(timestamp > GENESIS_TS, "invalid timestamp");
-        offset += tssize;
+        offset += size;
 
         require(data.toUint8(offset) == 16, "invalid asset");
         offset += 1;
@@ -104,8 +103,8 @@ contract MixinProcess {
             "timestamp older than last price"
         );
 
-        uint8 psize = data.toUint8(offset);
-        require(psize >= 4 && psize <= 37, "invalid price");
+        size = data.toUint8(offset);
+        require(size >= 4 && size <= 37, "invalid price");
         offset += 1;
 
         PriceData memory price;
@@ -113,39 +112,31 @@ contract MixinProcess {
         (price.price.sign, price.price.exp, price.price.value) = toDecimal(
             data,
             offset,
-            psize
+            size
         );
-        offset += psize;
+        offset += size;
 
         uint256[2] memory message = data.slice(0, offset).hashToPoint();
 
-        uint8 cosisize = data.toUint8(offset);
-        require(cosisize == 36 || cosisize == 97, "invalid cosi-signature");
+        size = data.toUint8(offset);
+        require(size == 36 || size == 97, "invalid cosi-signature");
         offset += 1;
 
-        require(data.toUint8(offset) == 1, "invalid signature mask size");
+        size = data.toUint8(offset);
+        require(size > 0 && size <= 8, "invalid signature mask size");
         offset += 1;
 
-        uint8 mask = data.toUint8(offset);
+        uint64 mask = toUint64(data, offset, size);
         offset += 1;
 
         uint256[4] memory pubkey = maskToPublicKey(mask);
 
-        uint8 sigsize = data.toUint8(offset);
-        require(sigsize == 33 || sigsize == 64, "invalid signature size");
+        size = data.toUint8(offset);
+        require(size == 33 || size == 64, "invalid signature size");
         offset += 1;
 
-        uint256[2] memory sig;
-        sig[0] = data.toUint256(offset);
-        offset += 32;
-        if (sigsize == 64) {
-            sig[1] = data.toUint256(offset + 32);
-            offset += 32;
-        } else {
-            uint8 sigMask = data.toUint8(offset);
-            sig[1] = decompresSignature(sig[0], sigMask);
-            offset += 1;
-        }
+        uint256[2] memory sig = toSignature(data, offset, size);
+        offset += size;
 
         require(sig.verifySingle(pubkey, message), "invalid price signature");
 
@@ -174,41 +165,42 @@ contract MixinProcess {
         return prices[asset];
     }
 
-    function mixinSenderToAddress(bytes memory sender)
-        internal
-        pure
-        returns (address)
-    {
-        return address(uint160(uint256(keccak256(sender))));
+    function toInt64(
+        bytes memory data,
+        uint256 offset,
+        uint8 size
+    ) internal pure returns (int64) {
+        uint64 ux = toUint64(data, offset, size);
+        int64 x = int64(ux >> 1);
+        if (ux & 1 != 0) {
+            x = ~x;
+        }
+        return x;
     }
 
-    function decompresSignature(uint256 x, uint8 m)
-        internal
-        view
-        returns (uint256)
-    {
-        uint256 x3 = mulmod(x, x, BLS_N);
-        x3 = mulmod(x3, x, BLS_N);
-        x3 = addmod(x3, 3, BLS_N);
-
-        uint256 y1;
-        bool found;
-        (y1, found) = sqrt(x3);
-        require(found, "invalid signature");
-
-        uint256 y2 = BLS_P - y1;
-        bool smaller = y1 < y2;
-        if ((m == 0x01 && smaller) || (m == 0x00 && !smaller)) {
-            y1 = y2;
+    function toUint64(
+        bytes memory data,
+        uint256 offset,
+        uint8 size
+    ) internal pure returns (uint64) {
+        uint64 x;
+        uint64 s;
+        for (uint256 i = offset; i < offset + size; i++) {
+            uint8 b = data.toUint8(i);
+            if (b < 0x80) {
+                require(i != 10 || b < 1, "uint64 value overflow");
+                return x | (uint64(b) << s);
+            }
+            x = x | ((uint64(b & 0x7f)) << s);
+            s += 7;
         }
-
-        return y1;
+        return 0;
     }
 
     function toDecimal(
         bytes memory data,
         uint256 offset,
-        uint8 length
+        uint8 size
     )
         internal
         pure
@@ -221,21 +213,41 @@ contract MixinProcess {
         int32 exp = data.toInt32(offset);
         offset += 4;
 
-        if (length == 4) {
+        if (size == 4) {
             return (true, exp, 0);
         }
 
         bool sign = (data.toUint8(offset) & 1) != 0;
         offset += 1;
 
-        uint256 value = new bytes(32 - (length - 5))
-            .concat(data.slice(offset, length - 5))
+        uint256 value = new bytes(32 - (size - 5))
+            .concat(data.slice(offset, size - 5))
             .toUint256(0);
 
         return (sign, exp, value);
     }
 
-    function maskToPublicKey(uint8 mask)
+    function toSignature(
+        bytes memory data,
+        uint256 offset,
+        uint8 size
+    ) internal view returns (uint256[2] memory) {
+        uint256[2] memory sig;
+        sig[0] = data.toUint256(offset);
+        offset += 32;
+        if (size == 64) {
+            sig[1] = data.toUint256(offset + 32);
+            offset += 32;
+        } else {
+            sig[1] = sig[0].sigToUncompresed(data.toUint8(offset));
+            offset += 1;
+        }
+
+        require(sig.isValidSignature(), "invalid signature");
+        return sig;
+    }
+
+    function maskToPublicKey(uint64 mask)
         internal
         view
         returns (uint256[4] memory)
@@ -265,88 +277,7 @@ contract MixinProcess {
                 ORACLE_GROUP[i][3]
             );
         }
+        require(pubkey.isValidPublicKey(), "invalid public key");
         return pubkey;
-    }
-
-    function uint16ToFixedBytes(uint16 x) internal pure returns (bytes memory) {
-        bytes memory c = new bytes(2);
-        bytes2 b = bytes2(x);
-        for (uint256 i = 0; i < 2; i++) {
-            c[i] = b[i];
-        }
-        return c;
-    }
-
-    function uint64ToFixedBytes(uint64 x) internal pure returns (bytes memory) {
-        bytes memory c = new bytes(8);
-        bytes8 b = bytes8(x);
-        for (uint256 i = 0; i < 8; i++) {
-            c[i] = b[i];
-        }
-        return c;
-    }
-
-    function uint128ToFixedBytes(uint128 x)
-        internal
-        pure
-        returns (bytes memory)
-    {
-        bytes memory c = new bytes(16);
-        bytes16 b = bytes16(x);
-        for (uint256 i = 0; i < 16; i++) {
-            c[i] = b[i];
-        }
-        return c;
-    }
-
-    function uint256ToVarBytes(uint256 x)
-        internal
-        pure
-        returns (bytes memory, uint16)
-    {
-        bytes memory c = new bytes(32);
-        bytes32 b = bytes32(x);
-        uint16 offset = 0;
-        for (uint16 i = 0; i < 32; i++) {
-            c[i] = b[i];
-            if (c[i] > 0 && offset == 0) {
-                offset = i;
-            }
-        }
-        uint16 size = 32 - offset;
-        return (c.slice(offset, 32 - offset), size);
-    }
-
-    function sqrt(uint256 xx) internal view returns (uint256 x, bool hasRoot) {
-        bool callSuccess;
-        // solium-disable-next-line security/no-inline-assembly
-        assembly {
-            let freemem := mload(0x40)
-            mstore(freemem, 0x20)
-            mstore(add(freemem, 0x20), 0x20)
-            mstore(add(freemem, 0x40), 0x20)
-            mstore(add(freemem, 0x60), xx)
-            // (N + 1) / 4 = 0xc19139cb84c680a6e14116da060561765e05aa45a1c72a34f082305b61f3f52
-            mstore(
-                add(freemem, 0x80),
-                0xc19139cb84c680a6e14116da060561765e05aa45a1c72a34f082305b61f3f52
-            )
-            // N = 0x30644e72e131a029b85045b68181585d97816a916871ca8d3c208c16d87cfd47
-            mstore(
-                add(freemem, 0xA0),
-                0x30644e72e131a029b85045b68181585d97816a916871ca8d3c208c16d87cfd47
-            )
-            callSuccess := staticcall(
-                sub(gas(), 2000),
-                5,
-                freemem,
-                0xC0,
-                freemem,
-                0x20
-            )
-            x := mload(freemem)
-            hasRoot := eq(xx, mulmod(x, x, BLS_N))
-        }
-        require(callSuccess, "BLS: sqrt modexp call failed");
     }
 }

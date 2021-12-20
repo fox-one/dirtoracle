@@ -11,11 +11,18 @@ import (
 )
 
 type (
+	En256Signature en256.Signature
+
 	En256CosiSignature struct {
 		en256.Signature
 		Mask uint64
 	}
 )
+
+func (s *En256Signature) MarshalBinary() ([]byte, error) {
+	var sig en256.Signature = en256.Signature(*s)
+	return sig.Bytes(), nil
+}
 
 func (s *En256CosiSignature) Bytes() []byte {
 	bts, err := mtg.Encode(s.Mask, &s.Signature)

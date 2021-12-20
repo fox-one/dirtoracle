@@ -185,6 +185,29 @@ library BLS {
         }
     }
 
+    function sigToUncompresed(uint256 x, uint8 m)
+        internal
+        view
+        returns (uint256)
+    {
+        uint256 x3 = mulmod(x, x, N);
+        x3 = mulmod(x3, x, N);
+        x3 = addmod(x3, 3, N);
+
+        uint256 y1;
+        bool found;
+        (y1, found) = sqrt(x3);
+        require(found, "invalid signature");
+
+        uint256 y2 = N - y1;
+        bool smaller = y1 < y2;
+        if ((m == 0x01 && smaller) || (m == 0x00 && !smaller)) {
+            y1 = y2;
+        }
+
+        return y1;
+    }
+
     function pubkeyToUncompresed(
         uint256[2] memory compressed,
         uint256[2] memory y

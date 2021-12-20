@@ -122,6 +122,7 @@ func (w *Worker) handleSnapshot(ctx context.Context, snapshot *core.Snapshot) er
 		return nil
 	}
 
+	data, _ = p.MarshalBinary()
 	op := &encoding.Operation{
 		Purpose: encoding.OperationPurposeGroupEvent,
 		Process: w.system.MvmProcess,
