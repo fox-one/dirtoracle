@@ -46,3 +46,12 @@ jobs:
           docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG -f ./docker/Dockerfile .
           docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
 
+      - name: Build, tag, and push mvm image to Amazon ECR
+        env:
+          ECR_REGISTRY_MVM: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY_MVM: doracle-mvm
+          IMAGE_TAG: ${{ steps.imagetag.outputs.tag }}
+        run: |
+          docker build -t $ECR_REGISTRY_MVM/$ECR_REPOSITORY_MVM:$IMAGE_TAG -f ./docker/Dockerfile.mvm .
+          docker push $ECR_REGISTRY_MVM/$ECR_REPOSITORY_MVM:$IMAGE_TAG
+
