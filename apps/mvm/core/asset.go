@@ -15,6 +15,7 @@ type (
 		Price          decimal.Decimal `sql:"type:decimal(24,12)" json:"price,omitempty"`
 		PriceDuration  int64           `json:"price_duration,omitempty"`
 		PriceUpdatedAt *time.Time      `json:"price_updated_at,omitempty"`
+		DeletedAt      *time.Time      `json:"deleted_at,omitempty"`
 	}
 
 	AssetStore interface {
