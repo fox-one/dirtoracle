@@ -1,0 +1,27 @@
+before:
+  hooks:
+    - go mod download
+
+builds:
+  - main: .
+    id: dirtoracle
+    binary: dirtoracle
+    goos:
+      - linux
+    goarch:
+      - amd64
+    env:
+      - CGO_ENABLED=1
+    ldflags:
+      - -s -w -X main.version={{.Version}} -X main.commit={{.ShortCommit}}
+
+dockers:
+  - id: dirtoracle
+    goos: linux
+    goarch: amd64
+    dockerfile: docker/Dockerfile
+    image_templates:
+      - "ghcr.io/fox-one/{{ .ProjectName }}/dirtoracle:latest"
+      - "ghcr.io/fox-one/{{ .ProjectName }}/dirtoracle:{{ .Major }}"
+      - "ghcr.io/fox-one/{{ .ProjectName }}/dirtoracle:{{ .Major }}.{{ .Minor }}"
+      - "ghcr.io/fox-one/{{ .ProjectName }}/dirtoracle:{{ .Major }}.{{ .Minor }}.{{ .Patch }}"
