@@ -52,6 +52,7 @@ func FindRoutes(pairs []*Pair, from, to string) (Routes, bool) {
 }
 
 // findRoutes: return (routes, state)
+//
 //	state:
 //		0 for pending
 //		1 for success
