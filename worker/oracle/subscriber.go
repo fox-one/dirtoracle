@@ -106,6 +106,7 @@ func (m *Oracle) handlePriceRequest(ctx context.Context, subscriber *core.Subscr
 
 		price, err := m.getPrice(ctx, &req.Asset)
 		if err != nil || price.IsZero() {
+			log.WithError(err).Errorln("fail to fetch price")
 			return err
 		}
 		proposal.ProposalRequest.Price = price

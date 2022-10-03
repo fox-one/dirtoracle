@@ -9,9 +9,9 @@ import (
 	"github.com/go-resty/resty/v2"
 )
 
-const bwatchHost = "https://f1-bwatch-api.firesbox.com"
+const bwatchHost = "https://mtg-api.b.watch"
 
-var client = resty.New().SetHostURL(bwatchHost)
+var client = resty.New().SetBaseURL(bwatchHost)
 
 func request(ctx context.Context) *resty.Request {
 	return client.R().SetContext(ctx)
