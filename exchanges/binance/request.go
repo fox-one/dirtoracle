@@ -15,7 +15,7 @@ const (
 
 var httpClient = resty.New().
 	SetHeader("Content-Type", "application/json").
-	SetHostURL(Endpoint).
+	SetBaseURL(Endpoint).
 	SetTimeout(10 * time.Second)
 
 type Error struct {

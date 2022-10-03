@@ -3,7 +3,7 @@ package ftx
 import (
 	"context"
 	"encoding/json"
-	"io/ioutil"
+	"os"
 	"testing"
 
 	"github.com/fox-one/dirtoracle/core"
@@ -15,7 +15,7 @@ import (
 var assets []*core.Asset
 
 func init() {
-	if bts, err := ioutil.ReadFile("../testdata/assets.json"); err == nil {
+	if bts, err := os.ReadFile("../testdata/assets.json"); err == nil {
 		json.Unmarshal(bts, &assets)
 	}
 }
@@ -23,8 +23,8 @@ func init() {
 func TestGetPrice(t *testing.T) {
 	var (
 		exch = exchanges.Humanize(exchanges.PusdConverter(New(), fswap.New(), &core.Asset{
-			AssetID: "8549b4ad-917c-3461-a646-481adc5d7f7f",
-			Symbol:  "DAI",
+			AssetID: "9b180ab6-6abe-3dc0-a13f-04169eb34bfa",
+			Symbol:  "USDC",
 		}))
 		ctx = context.Background()
 	)

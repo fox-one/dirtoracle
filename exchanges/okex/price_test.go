@@ -3,7 +3,7 @@ package okex
 import (
 	"context"
 	"encoding/json"
-	"io/ioutil"
+	"os"
 	"testing"
 	"time"
 
@@ -16,7 +16,7 @@ import (
 var assets []*core.Asset
 
 func init() {
-	if bts, err := ioutil.ReadFile("../testdata/assets.json"); err == nil {
+	if bts, err := os.ReadFile("../testdata/assets.json"); err == nil {
 		json.Unmarshal(bts, &assets)
 	}
 }

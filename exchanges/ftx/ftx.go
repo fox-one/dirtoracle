@@ -32,7 +32,8 @@ func (*ftxEx) Name() string {
 
 func (exch *ftxEx) GetPrice(ctx context.Context, a *core.Asset) (decimal.Decimal, error) {
 	symbol := exch.assetSymbol(a.Symbol)
-	if symbol == QuoteSymbol {
+	switch symbol {
+	case "USD", "USDC":
 		return decimal.New(1, 0), nil
 	}
 

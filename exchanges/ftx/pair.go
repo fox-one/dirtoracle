@@ -65,7 +65,7 @@ func (pairs Pairs) export() []*route.Pair {
 			items = append(items, &route.Pair{
 				Symbol: pair.Name,
 				Base:   pair.Underlying,
-				Quote:  currencyPerp,
+				Quote:  QuoteSymbol,
 			})
 		}
 	}

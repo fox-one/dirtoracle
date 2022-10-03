@@ -19,10 +19,6 @@ func provideAllExchanges(assets core.AssetService) map[string]core.Exchange {
 	fswap := provideFswapExchanges()
 	eswap := provideExinswapExchanges()
 
-	dai := &core.Asset{
-		AssetID: "8549b4ad-917c-3461-a646-481adc5d7f7f",
-		Symbol:  "DAI",
-	}
 	usdc := &core.Asset{
 		AssetID: "9b180ab6-6abe-3dc0-a13f-04169eb34bfa",
 		Symbol:  "USDC",
@@ -36,7 +32,7 @@ func provideAllExchanges(assets core.AssetService) map[string]core.Exchange {
 	bitfinex := block(exchanges.PusdConverter(exchanges.FillSymbol(provideBitfinexExchanges(), assets), fswap, usdc))
 	huobi := block(exchanges.PusdConverter(exchanges.FillSymbol(provideHuobiExchanges(), assets), fswap, usdc))
 	okex := block(exchanges.PusdConverter(exchanges.FillSymbol(provideOkexExchanges(), assets), fswap, usdc))
-	ftx := block(exchanges.PusdConverter(exchanges.FillSymbol(provideFtxExchanges(), assets), fswap, dai))
+	ftx := block(exchanges.PusdConverter(exchanges.FillSymbol(provideFtxExchanges(), assets), fswap, usdc))
 
 	return map[string]core.Exchange{
 		fswap.Name():    fswap,
