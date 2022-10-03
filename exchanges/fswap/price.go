@@ -15,7 +15,7 @@ func (f *fswapEx) getPrice(ctx context.Context, asset *core.Asset, pairs []*fswa
 	order, err := fswapsdk.Route(pairs, pusdAsset, asset.AssetID, pusdFunds)
 	if err != nil {
 		log.WithError(err).Errorln("Route")
-		return decimal.Zero, err
+		return decimal.Zero, nil
 	}
 
 	return order.PayAmount.Div(order.FillAmount).Truncate(8), nil
