@@ -10,11 +10,12 @@ import (
 
 type (
 	Config struct {
-		DB     db.Config `json:"db"`
-		Bwatch Bwatch    `json:"bwatch"`
-		Dapp   Dapp      `json:"dapp"`
-		Group  Group     `json:"group"`
-		Gas    Gas       `json:"gas"`
+		DB          db.Config      `json:"db"`
+		Bwatch      Bwatch         `json:"bwatch"`
+		Dapp        Dapp           `json:"dapp"`
+		Group       Group          `json:"group"`
+		Gas         Gas            `json:"gas"`
+		PriceLimits []*PriceLimits `json:"price_limits"`
 	}
 
 	Dapp struct {
@@ -38,14 +39,10 @@ type (
 		En256SignKey   *en256.PrivateKey `json:"en256_sign_key"`
 		ConversationID string            `json:"conversation_id"`
 	}
+
+	PriceLimits struct {
+		AssetID string          `json:"asset_id"`
+		Min     decimal.Decimal `json:"min"`
+		Max     decimal.Decimal `json:"max"`
+	}
 )
-
-func defaultVote(cfg *Config) {
-	if cfg.Gas.Asset == "" {
-		cfg.Gas.Asset = "965e5c6e-434c-3fa9-b780-c50f43cd955c"
-	}
-
-	if cfg.Gas.Amount.IsZero() {
-		cfg.Gas.Amount = decimal.New(1, -8)
-	}
-}
